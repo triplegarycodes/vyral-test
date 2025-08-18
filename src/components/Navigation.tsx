@@ -1,0 +1,66 @@
+import { 
+  Home, 
+  TreePine, 
+  Users, 
+  Zap, 
+  ShoppingBag, 
+  DollarSign, 
+  Heart 
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+interface NavigationProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
+export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
+  const navItems = [
+    { id: 'lyfeboard', icon: Home, label: 'LyfeBoard' },
+    { id: 'lyfetree', icon: TreePine, label: 'LyfeTree' },
+    { id: 'vybezone', icon: Users, label: 'VybeZone' },
+    { id: 'vybestryke', icon: Zap, label: 'VybeStryke' },
+    { id: 'vshop', icon: ShoppingBag, label: 'V-Shop' },
+    { id: 'money', icon: DollarSign, label: 'Money' },
+    { id: 'vybelink', icon: Heart, label: 'VybeLink' }
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border px-2 py-3 z-50">
+      <div className="flex justify-around items-center max-w-md mx-auto">
+        {navItems.slice(0, 5).map((item) => (
+          <Button
+            key={item.id}
+            variant={activeTab === item.id ? "gaming" : "ghost"}
+            size="sm"
+            onClick={() => onTabChange(item.id)}
+            className={`flex-col gap-1 h-auto py-2 px-3 min-w-0 ${
+              activeTab === item.id 
+                ? 'glow-primary' 
+                : 'hover:bg-muted/50'
+            }`}
+          >
+            <item.icon className="w-4 h-4" />
+            <span className="text-xs font-medium truncate">{item.label}</span>
+          </Button>
+        ))}
+      </div>
+      
+      {/* Extended nav for tablet/desktop */}
+      <div className="hidden md:flex justify-center mt-2 gap-2">
+        {navItems.slice(5).map((item) => (
+          <Button
+            key={item.id}
+            variant={activeTab === item.id ? "gaming" : "outline"}
+            size="sm"
+            onClick={() => onTabChange(item.id)}
+            className="flex items-center gap-2"
+          >
+            <item.icon className="w-4 h-4" />
+            {item.label}
+          </Button>
+        ))}
+      </div>
+    </nav>
+  );
+};
