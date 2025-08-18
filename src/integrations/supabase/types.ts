@@ -62,6 +62,42 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_goals: {
+        Row: {
+          category: string | null
+          created_at: string
+          current_amount: number | null
+          deadline: string | null
+          id: string
+          target_amount: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          current_amount?: number | null
+          deadline?: string | null
+          id?: string
+          target_amount: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          current_amount?: number | null
+          deadline?: string | null
+          id?: string
+          target_amount?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mood_entries: {
         Row: {
           created_at: string
@@ -92,6 +128,57 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          last_activity_date: string | null
+          level: number
+          streak_count: number
+          study_preferences: Json | null
+          updated_at: string
+          user_id: string
+          username: string | null
+          vybecoin_balance: number
+          xp: number
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_activity_date?: string | null
+          level?: number
+          streak_count?: number
+          study_preferences?: Json | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+          vybecoin_balance?: number
+          xp?: number
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_activity_date?: string | null
+          level?: number
+          streak_count?: number
+          study_preferences?: Json | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+          vybecoin_balance?: number
+          xp?: number
+        }
+        Relationships: []
+      }
       "public.profiles": {
         Row: {
           created_at: string
@@ -113,6 +200,42 @@ export type Database = {
           full_name?: string | null
           id?: number
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      shop_items: {
+        Row: {
+          active: boolean | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          price: number
+          rarity: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          price: number
+          rarity?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          price?: number
+          rarity?: string | null
         }
         Relationships: []
       }
@@ -148,6 +271,112 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      study_session_participants: {
+        Row: {
+          id: string
+          joined_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "study_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_sessions: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          current_participants: number | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          max_participants: number | null
+          session_date: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          current_participants?: number | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          max_participants?: number | null
+          session_date: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          current_participants?: number | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          max_participants?: number | null
+          session_date?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_challenge_progress: {
+        Row: {
+          challenge_id: string
+          completed: boolean | null
+          completed_at: string | null
+          id: string
+          progress_data: Json | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed?: boolean | null
+          completed_at?: string | null
+          id?: string
+          progress_data?: Json | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed?: boolean | null
+          completed_at?: string | null
+          id?: string
+          progress_data?: Json | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "vybestryke_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_preferences: {
         Row: {
@@ -236,6 +465,48 @@ export type Database = {
           created_at?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      vybestryke_challenges: {
+        Row: {
+          active: boolean | null
+          category: string
+          created_at: string
+          daily: boolean | null
+          description: string
+          difficulty: string | null
+          id: string
+          metadata: Json | null
+          title: string
+          vybecoin_reward: number | null
+          xp_reward: number
+        }
+        Insert: {
+          active?: boolean | null
+          category: string
+          created_at?: string
+          daily?: boolean | null
+          description: string
+          difficulty?: string | null
+          id?: string
+          metadata?: Json | null
+          title: string
+          vybecoin_reward?: number | null
+          xp_reward: number
+        }
+        Update: {
+          active?: boolean | null
+          category?: string
+          created_at?: string
+          daily?: boolean | null
+          description?: string
+          difficulty?: string | null
+          id?: string
+          metadata?: Json | null
+          title?: string
+          vybecoin_reward?: number | null
+          xp_reward?: number
         }
         Relationships: []
       }
