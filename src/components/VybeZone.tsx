@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, MessageSquare, Heart, Lock, Send, BookOpen, Gamepad2, Music, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { User } from "@supabase/supabase-js";
 
 interface VentingPost {
   id: string;
@@ -18,7 +19,16 @@ export const VybeZone = () => {
   const [ventingPosts, setVentingPosts] = useState<VentingPost[]>([]);
   const [newVentPost, setNewVentPost] = useState("");
   const [activeTab, setActiveTab] = useState("communities");
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   useEffect(() => {
     if (activeTab === "venting") {
@@ -50,9 +60,21 @@ export const VybeZone = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to share your thoughts",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('venting_posts')
-      .insert([{ content: newVentPost.trim() }]);
+      .insert([{ 
+        content: newVentPost.trim(),
+        user_id: user.id 
+      }]);
 
     if (error) {
       toast({

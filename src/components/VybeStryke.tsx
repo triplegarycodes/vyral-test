@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Zap, Target, Trophy, Clock, Coins, Star, CheckCircle, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { User } from "@supabase/supabase-js";
 
 interface Challenge {
   id: string;
@@ -32,7 +33,16 @@ export const VybeStryke = () => {
   const [userProgress, setUserProgress] = useState<ChallengeProgress[]>([]);
   const [activeTab, setActiveTab] = useState("daily");
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   useEffect(() => {
     fetchChallenges();
@@ -71,10 +81,20 @@ export const VybeStryke = () => {
   };
 
   const startChallenge = async (challengeId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to start challenges",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('user_challenge_progress')
       .upsert([{
         challenge_id: challengeId,
+        user_id: user.id,
         completed: false,
         started_at: new Date().toISOString()
       }], { onConflict: 'user_id,challenge_id' });
@@ -95,6 +115,15 @@ export const VybeStryke = () => {
   };
 
   const completeChallenge = async (challenge: Challenge) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to complete challenges",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Mark challenge as completed
     const { error: progressError } = await supabase
       .from('user_challenge_progress')
@@ -102,7 +131,8 @@ export const VybeStryke = () => {
         completed: true,
         completed_at: new Date().toISOString()
       })
-      .eq('challenge_id', challenge.id);
+      .eq('challenge_id', challenge.id)
+      .eq('user_id', user.id);
 
     if (progressError) {
       toast({
@@ -119,7 +149,8 @@ export const VybeStryke = () => {
         .from('coin_transactions')
         .insert([{
           amount: challenge.vybecoin_reward,
-          reason: `Completed challenge: ${challenge.title}`
+          reason: `Completed challenge: ${challenge.title}`,
+          user_id: user.id
         }]);
 
       if (coinError) {

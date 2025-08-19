@@ -9,34 +9,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Heart, Users, BookOpen, Clock, Plus, Calendar, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface StudySession {
   id: string;
+  user_id: string;
   subject: string;
-  description: string;
+  description: string | null;
   session_date: string;
-  duration_minutes: number;
-  max_participants: number;
-  current_participants: number;
-  active: boolean;
-  profiles: {
-    username: string;
-    display_name: string;
-  };
+  duration_minutes: number | null;
+  max_participants: number | null;
+  current_participants: number | null;
+  active: boolean | null;
+  created_at: string;
 }
 
-interface StudySessionWithParticipants extends StudySession {
-  study_session_participants: {
-    profiles: {
-      username: string;
-      display_name: string;
-    };
-  }[];
+interface StudySessionWithHost extends StudySession {
+  profiles: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
 }
 
 export const VybeLink = () => {
-  const [studySessions, setStudySessions] = useState<StudySessionWithParticipants[]>([]);
+  const [studySessions, setStudySessions] = useState<StudySessionWithHost[]>([]);
   const [showCreateSession, setShowCreateSession] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [newSession, setNewSession] = useState({
     subject: "",
     description: "",
@@ -47,19 +45,18 @@ export const VybeLink = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
     fetchStudySessions();
   }, []);
 
   const fetchStudySessions = async () => {
     const { data, error } = await supabase
       .from('study_sessions')
-      .select(`
-        *,
-        profiles!study_sessions_user_id_fkey(username, display_name),
-        study_session_participants(
-          profiles!study_session_participants_user_id_fkey(username, display_name)
-        )
-      `)
+      .select('*')
       .eq('active', true)
       .gte('session_date', new Date().toISOString())
       .order('session_date', { ascending: true });
@@ -71,7 +68,12 @@ export const VybeLink = () => {
         variant: "destructive"
       });
     } else {
-      setStudySessions(data || []);
+      // Transform the data to match our interface
+      const sessionsWithProfiles = (data || []).map(session => ({
+        ...session,
+        profiles: null // We'll fetch profile data separately if needed
+      }));
+      setStudySessions(sessionsWithProfiles);
     }
   };
 
@@ -80,6 +82,15 @@ export const VybeLink = () => {
       toast({
         title: "Missing information",
         description: "Please fill in subject and date",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to create study sessions",
         variant: "destructive"
       });
       return;
@@ -94,7 +105,8 @@ export const VybeLink = () => {
         description: newSession.description,
         session_date: sessionDateTime,
         duration_minutes: newSession.duration_minutes,
-        max_participants: newSession.max_participants
+        max_participants: newSession.max_participants,
+        user_id: user.id
       }]);
 
     if (error) {
@@ -121,9 +133,21 @@ export const VybeLink = () => {
   };
 
   const joinStudySession = async (sessionId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to join study sessions",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('study_session_participants')
-      .insert([{ session_id: sessionId }]);
+      .insert([{ 
+        session_id: sessionId,
+        user_id: user.id 
+      }]);
 
     if (error) {
       if (error.code === '23505') {
@@ -189,9 +213,7 @@ export const VybeLink = () => {
         
         <Card className="p-4 text-center">
           <BookOpen className="w-8 h-8 text-gaming-green mx-auto mb-2" />
-          <h3 className="font-semibold text-lg">
-            {studySessions.reduce((sum, session) => sum + session.study_session_participants.length, 0)}
-          </h3>
+          <h3 className="font-semibold text-lg">0</h3>
           <p className="text-xs text-muted-foreground">Students Connected</p>
         </Card>
       </div>
@@ -317,7 +339,7 @@ export const VybeLink = () => {
                         {session.subject}
                       </h3>
                       <Badge variant="secondary">
-                        {session.study_session_participants.length}/{session.max_participants} joined
+                        {session.current_participants || 1}/{session.max_participants} joined
                       </Badge>
                     </div>
                     
@@ -344,25 +366,19 @@ export const VybeLink = () => {
                         Host: {session.profiles?.display_name || session.profiles?.username || 'Anonymous'}
                       </span>
                     </div>
-                    
-                    {session.study_session_participants.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {session.study_session_participants.map((participant, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {participant.profiles?.display_name || participant.profiles?.username || 'Student'}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   
                   <Button
-                    variant={session.study_session_participants.length >= session.max_participants ? "outline" : "gaming"}
+                    variant={
+                      (session.current_participants || 1) >= (session.max_participants || 4)
+                        ? "outline"
+                        : "gaming"
+                    }
                     size="sm"
-                    disabled={session.study_session_participants.length >= session.max_participants}
+                    disabled={(session.current_participants || 1) >= (session.max_participants || 4)}
                     onClick={() => joinStudySession(session.id)}
                   >
-                    {session.study_session_participants.length >= session.max_participants ? "Full" : "Join"}
+                    {(session.current_participants || 1) >= (session.max_participants || 4) ? "Full" : "Join"}
                   </Button>
                 </div>
               </Card>
