@@ -3,8 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, MessageSquare, Heart, Lock, Send, BookOpen, Gamepad2, Music, Palette } from "lucide-react";
+import { Users, MessageSquare, Heart, Lock, Send, Search, BookOpen, Gamepad2, Music, Palette, Code, Dumbbell, Book } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
@@ -15,11 +16,31 @@ interface VentingPost {
   created_at: string;
 }
 
+interface Community {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  category: string;
+  member_count: number;
+  is_moderated: boolean;
+}
+
+interface CommunityMembership {
+  community_id: string;
+  user_id: string;
+  joined_at: string;
+}
+
 export const VybeZone = () => {
   const [ventingPosts, setVentingPosts] = useState<VentingPost[]>([]);
   const [newVentPost, setNewVentPost] = useState("");
   const [activeTab, setActiveTab] = useState("communities");
   const [user, setUser] = useState<User | null>(null);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [userMemberships, setUserMemberships] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -28,13 +49,48 @@ export const VybeZone = () => {
       setUser(user);
     };
     getUser();
+    fetchCommunities();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserMemberships();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (activeTab === "venting") {
       fetchVentingPosts();
     }
   }, [activeTab]);
+
+  const fetchCommunities = async () => {
+    const { data, error } = await supabase
+      .from('communities')
+      .select('*')
+      .order('member_count', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching communities:", error);
+    } else {
+      setCommunities(data || []);
+    }
+  };
+
+  const fetchUserMemberships = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('community_members')
+      .select('community_id')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error("Error fetching memberships:", error);
+    } else {
+      setUserMemberships(data?.map(m => m.community_id) || []);
+    }
+  };
 
   const fetchVentingPosts = async () => {
     const { data, error } = await supabase
@@ -105,36 +161,84 @@ export const VybeZone = () => {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const communities = [
-    {
-      name: "Study Squad",
-      description: "Connect with fellow students and share study tips",
-      icon: BookOpen,
-      members: 1247,
-      color: "text-primary"
-    },
-    {
-      name: "Creative Corner",
-      description: "Share your art, music, and creative projects",
-      icon: Palette,
-      members: 892,
-      color: "text-gaming-purple"
-    },
-    {
-      name: "Gaming Guild",
-      description: "Discuss games, find teammates, and share achievements",
-      icon: Gamepad2,
-      members: 2156,
-      color: "text-gaming-green"
-    },
-    {
-      name: "Music Makers",
-      description: "For musicians, producers, and music lovers",
-      icon: Music,
-      members: 634,
-      color: "text-gaming-orange"
+  const getIconComponent = (iconName: string) => {
+    const icons: { [key: string]: any } = {
+      BookOpen, Palette, Gamepad2, Music, Code, Dumbbell, Book, Users, Heart
+    };
+    return icons[iconName] || Users;
+  };
+
+  const joinCommunity = async (communityId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required", 
+        description: "Please sign in to join communities",
+        variant: "destructive"
+      });
+      return;
     }
-  ];
+
+    const { error } = await supabase
+      .from('community_members')
+      .insert([{ 
+        community_id: communityId,
+        user_id: user.id 
+      }]);
+
+    if (error) {
+      if (error.code === '23505') {
+        toast({
+          title: "Already a member",
+          description: "You're already part of this community!",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error joining community",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: "Joined successfully!",
+        description: "Welcome to the community!"
+      });
+      fetchUserMemberships();
+      fetchCommunities();
+    }
+  };
+
+  const leaveCommunity = async (communityId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('community_members')
+      .delete()
+      .eq('community_id', communityId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast({
+        title: "Error leaving community",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Left community",
+        description: "You've left the community"
+      });
+      fetchUserMemberships();
+      fetchCommunities();
+    }
+  };
+
+  const filteredCommunities = communities.filter(community =>
+    community.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    community.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    community.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6 p-4">
@@ -154,39 +258,90 @@ export const VybeZone = () => {
 
         <TabsContent value="communities" className="mt-6">
           <div className="space-y-4">
+            {/* Search Bar */}
+            <Card className="p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search communities by name, topic, or category..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </Card>
+
             <Card className="p-4">
               <div className="flex items-center gap-3 mb-4">
                 <Users className="w-6 h-6 text-primary" />
-                <h2 className="text-lg font-semibold">Join Communities</h2>
+                <h2 className="text-lg font-semibold">Teen Communities</h2>
+                <Badge variant="secondary">{filteredCommunities.length} communities</Badge>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                Connect with like-minded peers in moderated, positive communities
+                Connect with like-minded peers in safe, moderated communities
               </p>
               
               <div className="space-y-3">
-                {communities.map((community, index) => (
-                  <Card key={index} className="p-4 hover:border-accent/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-muted/30 flex items-center justify-center">
-                          <community.icon className={`w-5 h-5 ${community.color}`} />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{community.name}</h3>
-                          <p className="text-xs text-muted-foreground">{community.description}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="secondary" className="text-xs">
-                              {community.members.toLocaleString()} members
-                            </Badge>
+                {filteredCommunities.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No communities found</p>
+                    <p className="text-sm">Try adjusting your search terms</p>
+                  </div>
+                ) : (
+                  filteredCommunities.map((community) => {
+                    const IconComponent = getIconComponent(community.icon);
+                    const isMember = userMemberships.includes(community.id);
+                    
+                    return (
+                      <Card key={community.id} className="p-4 hover:border-accent/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-muted/30 flex items-center justify-center">
+                              <IconComponent className={`w-5 h-5 ${community.color}`} />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold">{community.name}</h3>
+                              <p className="text-xs text-muted-foreground">{community.description}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className="text-xs">
+                                  {community.member_count.toLocaleString()} members
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {community.category}
+                                </Badge>
+                                {community.is_moderated && (
+                                  <Badge variant="outline" className="text-xs text-gaming-green">
+                                    Moderated
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {isMember ? (
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => leaveCommunity(community.id)}
+                              >
+                                Leave
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => joinCommunity(community.id)}
+                              >
+                                Join
+                              </Button>
+                            )}
                           </div>
                         </div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        Join
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
+                      </Card>
+                    );
+                  })
+                )}
               </div>
             </Card>
 
