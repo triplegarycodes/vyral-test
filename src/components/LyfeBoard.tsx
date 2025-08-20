@@ -1,27 +1,32 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { UserProfile } from "@/components/UserProfile";
+import { LevelUpAnimation } from "@/components/LevelUpAnimation";
 import { 
-  Trophy, 
   Target, 
+  Plus, 
+  Check, 
+  Clock, 
+  Trophy, 
   Zap, 
   Calendar,
-  TrendingUp,
-  Star,
-  Plus,
-  Flame,
   Sparkles,
   Brain,
-  Clock
+  CheckCircle
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { LevelUpAnimation } from "./LevelUpAnimation";
-import type { User } from "@supabase/supabase-js";
 
 interface AIGoal {
   id: string;
@@ -36,34 +41,14 @@ interface AIGoal {
   created_at: string;
 }
 
-interface UserProfile {
-  id: string;
-  user_id: string;
-  level: number;
-  xp: number;
-  streak_count: number;
-  last_activity_date?: string;
-}
-
-// Progressive XP requirements: 10, 15, 30, 50, 80, 120, 170, 230, 300, 380, 470, 570, 680, 800, 930, 1070, 1220, 1380, 1550, 1730
-const calculateXPRequired = (level: number): number => {
-  if (level <= 1) return 10;
-  if (level <= 2) return 15;
-  if (level <= 3) return 30;
-  
-  // Progressive formula: base + (level * multiplier)
-  return Math.floor(10 + (level - 1) * (level * 8));
-};
-
 export const LyfeBoard = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { user, profile, refreshProfile } = useAuth();
   const [aiGoals, setAiGoals] = useState<AIGoal[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showLevelUp, setShowLevelUp] = useState(false);
-  const [levelUpLevel, setLevelUpLevel] = useState(1);
-  const [showAIGenerator, setShowAIGenerator] = useState(false);
-  const [goalPreferences, setGoalPreferences] = useState({
-    category: 'general',
+  const [newLevel, setNewLevel] = useState(1);
+  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [aiPreferences, setAiPreferences] = useState({
     difficulty: 'easy',
     timeAvailable: '30 minutes',
     interests: ''
@@ -72,79 +57,105 @@ export const LyfeBoard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-  }, []);
-
-  useEffect(() => {
     if (user) {
-      fetchUserProfile();
       fetchAIGoals();
     }
   }, [user]);
 
-  const fetchUserProfile = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching profile:", error);
-    } else {
-      setUserProfile(data);
-    }
-  };
-
   const fetchAIGoals = async () => {
     if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ai_goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    const { data, error } = await supabase
-      .from('ai_goals')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(6);
-
-    if (error) {
-      console.error("Error fetching goals:", error);
-    } else {
+      if (error) throw error;
       setAiGoals(data || []);
+    } catch (error) {
+      console.error('Error fetching AI goals:', error);
+      toast({
+        title: "Failed to load goals",
+        description: "There was an error loading your goals. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const generateAIGoals = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to generate goals",
-        variant: "destructive"
-      });
+  const getXPForLevel = (level: number) => {
+    if (level === 1) return 10;
+    return Math.floor(10 * Math.pow(1.5, level - 1));
+  };
+
+  const addXPAndCheckLevelUp = async (xpGained: number) => {
+    if (!user || !profile) return;
+
+    const currentXP = profile.xp;
+    const currentLevel = profile.level;
+    const newXP = currentXP + xpGained;
+    
+    // Calculate if level up occurs
+    let newLevelValue = currentLevel;
+    let totalXPNeeded = getXPForLevel(currentLevel + 1);
+    
+    while (newXP >= totalXPNeeded) {
+      newLevelValue++;
+      totalXPNeeded = getXPForLevel(newLevelValue + 1);
+    }
+
+    // Update profile in database
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        xp: newXP, 
+        level: newLevelValue,
+        vybecoin_balance: profile.vybecoin_balance + (newLevelValue > currentLevel ? newLevelValue * 10 : 0)
+      })
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error updating profile:', error);
       return;
     }
 
-    setGeneratingGoals(true);
+    // Refresh profile data
+    await refreshProfile();
 
+    // Show level up animation if level increased
+    if (newLevelValue > currentLevel) {
+      setNewLevel(newLevelValue);
+      setShowLevelUp(true);
+    }
+
+    // Show XP gain toast
+    toast({
+      title: `+${xpGained} XP!`,
+      description: newLevelValue > currentLevel ? `🎉 Level ${newLevelValue} achieved!` : "Great progress!",
+    });
+  };
+
+  const generateAIGoals = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setGeneratingGoals(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-ai-goals', {
         body: {
-          category: goalPreferences.category,
-          difficulty: goalPreferences.difficulty,
-          timeAvailable: goalPreferences.timeAvailable,
-          interests: goalPreferences.interests.split(',').map(i => i.trim()).filter(Boolean),
-          currentGoals: aiGoals.filter(g => !g.completed).map(g => g.title)
+          difficulty: aiPreferences.difficulty,
+          timeAvailable: aiPreferences.timeAvailable,
+          interests: aiPreferences.interests.split(',').map(i => i.trim()).filter(Boolean)
         }
       });
 
       if (error) throw error;
-
-      // Insert generated goals into database
+      
+      // Insert generated goals
       const goalsToInsert = data.goals.map((goal: any) => ({
         ...goal,
         user_id: user.id
@@ -162,10 +173,9 @@ export const LyfeBoard = () => {
       });
 
       fetchAIGoals();
-      setShowAIGenerator(false);
-
+      setShowAIDialog(false);
     } catch (error) {
-      console.error("Error generating goals:", error);
+      console.error('Error generating goals:', error);
       toast({
         title: "Error generating goals",
         description: "Please try again later",
@@ -176,332 +186,273 @@ export const LyfeBoard = () => {
     }
   };
 
-  const completeGoal = async (goalId: string) => {
-    if (!user || !userProfile) return;
+  const toggleGoalCompletion = async (goal: AIGoal) => {
+    if (!user) return;
 
-    const goal = aiGoals.find(g => g.id === goalId);
-    if (!goal) return;
-
-    // Mark goal as completed
     const { error } = await supabase
       .from('ai_goals')
       .update({ 
-        completed: true, 
-        completed_at: new Date().toISOString() 
+        completed: !goal.completed,
+        completed_at: !goal.completed ? new Date().toISOString() : null
       })
-      .eq('id', goalId);
+      .eq('id', goal.id);
 
     if (error) {
       toast({
-        title: "Error completing goal",
+        title: "Error updating goal",
         description: error.message,
         variant: "destructive"
       });
       return;
     }
 
-    // Update user XP and level
-    const newXP = userProfile.xp + goal.xp_reward;
-    const currentLevelXP = calculateXPRequired(userProfile.level);
-    let newLevel = userProfile.level;
-    let remainingXP = newXP;
-
-    // Calculate level ups
-    while (remainingXP >= calculateXPRequired(newLevel) && newLevel < 20) {
-      remainingXP -= calculateXPRequired(newLevel);
-      newLevel++;
+    if (!goal.completed) {
+      await addXPAndCheckLevelUp(goal.xp_reward);
     }
 
-    // Update profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        xp: newXP,
-        level: newLevel,
-        last_activity_date: new Date().toDateString()
-      })
-      .eq('user_id', user.id);
-
-    if (profileError) {
-      console.error("Error updating profile:", profileError);
-    } else {
-      // Show level up animation if leveled up
-      if (newLevel > userProfile.level) {
-        setLevelUpLevel(newLevel);
-        setShowLevelUp(true);
-      }
-
-      toast({
-        title: "Goal completed! 🎉",
-        description: `+${goal.xp_reward} XP earned${newLevel > userProfile.level ? ` | Level ${newLevel}!` : ''}`
-      });
-
-      fetchUserProfile();
-      fetchAIGoals();
-    }
+    fetchAIGoals();
   };
 
-  if (!userProfile) {
+  if (loading) {
     return (
-      <div className="space-y-6 p-4">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-gaming font-bold gradient-primary bg-clip-text text-transparent mb-2">
-            LyfeBoard
-          </h1>
-          <p className="text-muted-foreground">Loading your progress...</p>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-md mx-auto p-4 space-y-6">
+          <div className="space-y-4">
+            <Skeleton className="h-32 w-full rounded-lg" />
+            <Skeleton className="h-24 w-full rounded-lg" />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-lg" />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  const xpRequired = calculateXPRequired(userProfile.level);
-  const xpProgress = (userProfile.xp % xpRequired) / xpRequired * 100;
-  const activeGoals = aiGoals.filter(g => !g.completed);
-  const completedGoals = aiGoals.filter(g => g.completed);
+  if (!user || !profile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <EmptyState
+          icon={Target}
+          title="Getting Ready..."
+          description="Setting up your personal dashboard"
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-4">
-      {/* Level Up Animation */}
-      {showLevelUp && (
-        <LevelUpAnimation 
-          newLevel={levelUpLevel} 
-          onComplete={() => setShowLevelUp(false)} 
-        />
-      )}
+    <div className="min-h-screen bg-background">
+      <div className="max-w-md mx-auto p-4 space-y-6">
+        {/* User Profile */}
+        <UserProfile />
 
-      {/* Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-gaming font-bold gradient-primary bg-clip-text text-transparent mb-2">
-          LyfeBoard
-        </h1>
-        <p className="text-muted-foreground">Your personal command center</p>
-      </div>
-
-      {/* XP & Level Display - Separate Section */}
-      <Card className="p-4 gradient-secondary border-primary/20">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-gaming-orange" />
-            <span className="font-semibold">Level {userProfile.level}</span>
-          </div>
-          <div className="flex items-center gap-1 text-gaming-orange">
-            <Flame className="w-4 h-4" />
-            <span className="font-bold">{userProfile.streak_count}</span>
-            <span className="text-xs">streak</span>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>{userProfile.xp % xpRequired} / {xpRequired} XP</span>
-            <span className="text-muted-foreground">to Level {userProfile.level + 1}</span>
-          </div>
-          <Progress 
-            value={xpProgress} 
-            className="h-2 xp-bar"
-          />
-        </div>
-      </Card>
-
-      {/* AI Goal Generator */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Brain className="w-6 h-6 text-gaming-purple" />
-            <h2 className="text-lg font-semibold">AI Goal Generator</h2>
-          </div>
-          <Button 
-            variant="gaming" 
-            size="sm"
-            onClick={() => setShowAIGenerator(!showAIGenerator)}
-            disabled={generatingGoals}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            {generatingGoals ? 'Generating...' : 'Generate Goals'}
-          </Button>
-        </div>
-
-        {showAIGenerator && (
-          <div className="space-y-4 mb-6 p-4 bg-muted/30 rounded-lg border-dashed border">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <Select 
-                  value={goalPreferences.category} 
-                  onValueChange={(value) => setGoalPreferences(prev => ({ ...prev, category: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="health">Health & Fitness</SelectItem>
-                    <SelectItem value="learning">Learning & Study</SelectItem>
-                    <SelectItem value="creative">Creative</SelectItem>
-                    <SelectItem value="social">Social & Relationships</SelectItem>
-                    <SelectItem value="productivity">Productivity</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Difficulty</label>
-                <Select 
-                  value={goalPreferences.difficulty} 
-                  onValueChange={(value) => setGoalPreferences(prev => ({ ...prev, difficulty: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy (10-30 XP)</SelectItem>
-                    <SelectItem value="medium">Medium (25-60 XP)</SelectItem>
-                    <SelectItem value="hard">Hard (50-100 XP)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
+        {/* XP Progress Section */}
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg font-gaming">
+              <Zap className="w-5 h-5 text-gaming-orange" />
+              Progress Tracker
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Time Available</label>
-              <Select 
-                value={goalPreferences.timeAvailable} 
-                onValueChange={(value) => setGoalPreferences(prev => ({ ...prev, timeAvailable: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10 minutes">10 minutes</SelectItem>
-                  <SelectItem value="30 minutes">30 minutes</SelectItem>
-                  <SelectItem value="1 hour">1 hour</SelectItem>
-                  <SelectItem value="2+ hours">2+ hours</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Interests (comma-separated)</label>
-              <Input
-                placeholder="music, art, coding, sports..."
-                value={goalPreferences.interests}
-                onChange={(e) => setGoalPreferences(prev => ({ ...prev, interests: e.target.value }))}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Level {profile.level}</span>
+                <span className="font-mono">
+                  {profile.xp} / {getXPForLevel(profile.level + 1)} XP
+                </span>
+              </div>
+              <Progress 
+                value={Math.min(
+                  ((profile.xp - getXPForLevel(profile.level)) / 
+                   (getXPForLevel(profile.level + 1) - getXPForLevel(profile.level))) * 100, 
+                  100
+                )} 
+                className="h-3 xp-bar" 
               />
             </div>
 
-            <Button 
-              onClick={generateAIGoals} 
-              disabled={generatingGoals}
-              className="w-full"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              {generatingGoals ? 'Generating Goals...' : 'Generate Personalized Goals'}
-            </Button>
-          </div>
-        )}
-
-        <p className="text-sm text-muted-foreground">
-          Get AI-powered, personalized daily goals based on your interests and available time!
-        </p>
-      </Card>
-
-      {/* Active Goals */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Target className="w-5 h-5 text-primary" />
-            Active Goals
-          </h3>
-          <Badge variant="secondary">
-            {completedGoals.length}/{aiGoals.length}
-          </Badge>
-        </div>
-        
-        <div className="space-y-3">
-          {activeGoals.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No active goals</p>
-              <p className="text-sm">Use the AI Goal Generator above to create some!</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <Trophy className="w-6 h-6 mx-auto mb-1 text-gaming-orange" />
+                <p className="text-xs text-muted-foreground">Streak</p>
+                <p className="text-lg font-gaming font-bold">{profile.streak_count}</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <Target className="w-6 h-6 mx-auto mb-1 text-gaming-green" />
+                <p className="text-xs text-muted-foreground">Goals</p>
+                <p className="text-lg font-gaming font-bold">{aiGoals.filter(g => g.completed).length}</p>
+              </div>
             </div>
-          ) : (
-            activeGoals.map((goal) => (
-              <div 
-                key={goal.id}
-                className="flex items-center justify-between p-3 rounded-lg border bg-muted/50 border-border hover:border-primary/50 transition-colors"
-              >
-                <div className="flex items-center gap-3 flex-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => completeGoal(goal.id)}
-                    className="w-8 h-8 p-0"
-                  >
-                    ✓
+          </CardContent>
+        </Card>
+
+        {/* AI Goals Section */}
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 font-gaming">
+                <Brain className="w-5 h-5 text-gaming-purple" />
+                AI Goals
+              </CardTitle>
+              <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="gaming">
+                    <Plus className="w-4 h-4 mr-1" />
+                    Generate
                   </Button>
-                  <div className="flex-1">
-                    <h4 className="font-medium">{goal.title}</h4>
-                    <p className="text-xs text-muted-foreground">{goal.description}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {goal.category}
-                      </Badge>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        {goal.estimated_duration}
+                </DialogTrigger>
+                <DialogContent className="max-w-sm mx-auto">
+                  <DialogHeader>
+                    <DialogTitle className="font-gaming flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-gaming-purple" />
+                      AI Goal Generator
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={generateAIGoals} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Difficulty Level</Label>
+                      <Select
+                        value={aiPreferences.difficulty}
+                        onValueChange={(value) => setAiPreferences(prev => ({ ...prev, difficulty: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="easy">Easy - Small steps</SelectItem>
+                          <SelectItem value="medium">Medium - Balanced</SelectItem>
+                          <SelectItem value="hard">Hard - Challenge me</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Time Available</Label>
+                      <Select
+                        value={aiPreferences.timeAvailable}
+                        onValueChange={(value) => setAiPreferences(prev => ({ ...prev, timeAvailable: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15 minutes">15 minutes</SelectItem>
+                          <SelectItem value="30 minutes">30 minutes</SelectItem>
+                          <SelectItem value="1 hour">1 hour</SelectItem>
+                          <SelectItem value="2+ hours">2+ hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Interests (optional)</Label>
+                      <Input
+                        placeholder="music, art, coding, sports..."
+                        value={aiPreferences.interests}
+                        onChange={(e) => setAiPreferences(prev => ({ ...prev, interests: e.target.value }))}
+                      />
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={generatingGoals}>
+                      {generatingGoals ? (
+                        <>
+                          <LoadingSpinner size="sm" className="mr-2" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Generate Goals
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <CardDescription>
+              Personalized goals powered by AI
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {aiGoals.length === 0 ? (
+              <EmptyState
+                icon={Brain}
+                title="No Goals Yet"
+                description="Generate your first AI-powered goals to start your journey!"
+                actionLabel="Generate Goals"
+                onAction={() => setShowAIDialog(true)}
+              />
+            ) : (
+              <div className="space-y-3">
+                {aiGoals.slice(0, 5).map((goal) => (
+                  <div
+                    key={goal.id}
+                    className={`p-4 rounded-lg border transition-all ${
+                      goal.completed 
+                        ? 'bg-muted/30 border-gaming-green/30' 
+                        : 'bg-card/50 border-border/50 hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Button
+                        size="sm"
+                        variant={goal.completed ? "default" : "outline"}
+                        className={`mt-0.5 ${goal.completed ? 'bg-gaming-green hover:bg-gaming-green/80' : ''}`}
+                        onClick={() => toggleGoalCompletion(goal)}
+                      >
+                        {goal.completed ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : (
+                          <Check className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`font-semibold text-sm ${goal.completed ? 'line-through text-muted-foreground' : ''}`}>
+                          {goal.title}
+                        </h4>
+                        {goal.description && (
+                          <p className={`text-xs mt-1 ${goal.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground'}`}>
+                            {goal.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {goal.category}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {goal.difficulty}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Zap className="w-3 h-3 mr-1 text-gaming-orange" />
+                            {goal.xp_reward} XP
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <Badge variant="default" className="text-xs">
-                  +{goal.xp_reward} XP
-                </Badge>
+                ))}
+                
+                {aiGoals.length > 5 && (
+                  <Button variant="ghost" className="w-full">
+                    View All Goals ({aiGoals.length})
+                  </Button>
+                )}
               </div>
-            ))
-          )}
-        </div>
-      </Card>
-
-      {/* Recent Completions */}
-      {completedGoals.length > 0 && (
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-gaming-orange" />
-            Recently Completed
-          </h3>
-          
-          <div className="space-y-3">
-            {completedGoals.slice(0, 3).map((goal) => (
-              <div key={goal.id} className="flex items-center gap-3 p-3 rounded-lg bg-gaming-green/10 border border-gaming-green/30">
-                <div className="w-8 h-8 rounded-full bg-gaming-green flex items-center justify-center">
-                  <span className="text-xs text-black font-bold">✓</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gaming-green">{goal.title}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Completed {goal.completed_at && new Date(goal.completed_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <Badge variant="outline" className="text-xs border-gaming-green text-gaming-green">
-                  +{goal.xp_reward} XP
-                </Badge>
-              </div>
-            ))}
-          </div>
+            )}
+          </CardContent>
         </Card>
-      )}
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-4">
-        <Button variant="outline" className="h-16 flex-col gap-1">
-          <Calendar className="w-5 h-5" />
-          <span className="text-xs">Weekly View</span>
-        </Button>
-        <Button variant="outline" className="h-16 flex-col gap-1">
-          <TrendingUp className="w-5 h-5" />
-          <span className="text-xs">Progress</span>
-        </Button>
       </div>
+
+      {/* Level Up Animation */}
+      {showLevelUp && (
+        <LevelUpAnimation
+          newLevel={newLevel}
+          onComplete={() => setShowLevelUp(false)}
+        />
+      )}
     </div>
   );
 };

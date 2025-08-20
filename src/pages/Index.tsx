@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { LyfeBoard } from "@/components/LyfeBoard";
 import { LyfeTree } from "@/components/LyfeTree";
@@ -7,19 +9,37 @@ import { VybeStryke } from "@/components/VybeStryke";
 import { VShop } from "@/components/VShop";
 import { MoneyHub } from "@/components/MoneyHub";
 import { VybeLink } from "@/components/VybeLink";
-import { FeaturePlaceholder } from "@/components/FeaturePlaceholder";
 import { Navigation } from "@/components/Navigation";
-import { 
-  Users, 
-  Zap, 
-  ShoppingBag, 
-  DollarSign, 
-  Heart 
-} from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 const Index = () => {
+  const { user, loading } = useAuth();
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTab, setActiveTab] = useState('lyfeboard');
+
+  // Show loading spinner while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-primary p-1">
+            <img 
+              src="/lovable-uploads/049bd227-a8a2-4760-8bd6-2cb2bdf8d48d.png" 
+              alt="Vyral Logo" 
+              className="w-full h-full object-contain rounded-xl"
+            />
+          </div>
+          <LoadingSpinner size="lg" className="mb-4" />
+          <p className="text-muted-foreground">Loading your progress...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to auth if not signed in
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   if (showWelcome) {
     return <WelcomeScreen onEnter={() => setShowWelcome(false)} />;
