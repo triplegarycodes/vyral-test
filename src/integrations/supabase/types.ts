@@ -358,6 +358,203 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_assets: {
+        Row: {
+          active: boolean
+          admin_approved: boolean
+          admin_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          asset_type: string
+          content_data: Json
+          created_at: string
+          description: string | null
+          display_settings: Json | null
+          end_date: string | null
+          id: string
+          sponsor_id: string
+          start_date: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          admin_approved?: boolean
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          asset_type: string
+          content_data?: Json
+          created_at?: string
+          description?: string | null
+          display_settings?: Json | null
+          end_date?: string | null
+          id?: string
+          sponsor_id: string
+          start_date?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          admin_approved?: boolean
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          asset_type?: string
+          content_data?: Json
+          created_at?: string
+          description?: string | null
+          display_settings?: Json | null
+          end_date?: string | null
+          id?: string
+          sponsor_id?: string
+          start_date?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_assets_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          sponsor_id: string
+          status: string
+          stripe_subscription_id: string | null
+          tier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          sponsor_id: string
+          status?: string
+          stripe_subscription_id?: string | null
+          tier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          sponsor_id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          tier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_subscriptions_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_subscriptions_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "sponsor_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_tiers: {
+        Row: {
+          active: boolean
+          benefits: Json
+          created_at: string
+          display_price: string
+          id: string
+          max_sponsors: number | null
+          name: string
+          price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          benefits?: Json
+          created_at?: string
+          display_price: string
+          id?: string
+          max_sponsors?: number | null
+          name: string
+          price_cents: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          benefits?: Json
+          created_at?: string
+          display_price?: string
+          id?: string
+          max_sponsors?: number | null
+          name?: string
+          price_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sponsors: {
+        Row: {
+          contact_email: string
+          created_at: string
+          id: string
+          industry: string | null
+          organization_name: string
+          phone: string | null
+          status: string
+          stripe_customer_id: string | null
+          target_demographics: Json | null
+          updated_at: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          contact_email: string
+          created_at?: string
+          id?: string
+          industry?: string | null
+          organization_name: string
+          phone?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          target_demographics?: Json | null
+          updated_at?: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          contact_email?: string
+          created_at?: string
+          id?: string
+          industry?: string | null
+          organization_name?: string
+          phone?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          target_demographics?: Json | null
+          updated_at?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       sticky_notes: {
         Row: {
           color: string | null
