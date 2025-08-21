@@ -1,1 +1,36 @@
 project_id = "jrsadhufnvpayrehnjoj"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+security_update_password_require_reauthentication = false
+enable_signup = true
+enable_anonymous_sign_ins = false
+minimum_password_length = 6
+
+[db]
+port = 54322
+
+[edge_functions]
+enabled = true
+port = 54323
+
+[functions.generate-ai-goals]
+verify_jwt = true
+
+[functions.create-sponsor-checkout]
+verify_jwt = true
+
+[functions.handle-sponsor-webhook]
+verify_jwt = false
