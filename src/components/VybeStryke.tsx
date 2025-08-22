@@ -2,217 +2,129 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Zap, Target, Trophy, Clock, Coins, Star, CheckCircle, Play } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import type { User } from "@supabase/supabase-js";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Shuffle, Brain, Zap } from "lucide-react";
 
-interface Challenge {
-  id: string;
+interface Scenario {
+  id: number;
   title: string;
-  description: string;
-  category: string;
-  difficulty: string;
-  xp_reward: number;
-  vybecoin_reward: number;
-  daily: boolean;
+  options: [string, string, string];
 }
 
-interface ChallengeProgress {
-  id: string;
-  challenge_id: string;
-  completed: boolean;
-  completed_at: string | null;
-  started_at: string;
-}
+const scenarios: Scenario[] = [
+  {
+    id: 1,
+    title: "Late Night Loop - It's midnight. You're doom-scrolling instead of sleeping. A test is tomorrow",
+    options: [
+      "Why am I still awake Ughhh...",
+      "Time to hit the hay, I'm gonna crush this test!",
+      "Let's get this test over with! Time to stay up all night and cram."
+    ]
+  },
+  {
+    id: 2,
+    title: "Pop Quiz Panic - You're hit with a surprise quiz in your hardest class. You only studied for a different subject.",
+    options: [
+      "Ugh, seriously?! A pop quiz in *this* class? And I just spent all last night studying for history. This is NOT good.",
+      "Oh, sweet! A pop quiz! I totally vibe with this, even if it's not what I studied. I'm feeling pretty confident, actually.",
+      "Alright, deep breaths. It's a pop quiz, and I didn't study for *this* subject. Time to apply what I *do* know and focus on the questions I can answer. No use panicking now."
+    ]
+  },
+  {
+    id: 3,
+    title: "Mind Blank During Presentation - You're mid-sentence in front of the class and suddenly forget everything",
+    options: [
+      "Uh, sorry guys, my brain just totally blanked. What was I even talking about?",
+      "Hold on, I got this. Just a quick brain fart.",
+      "My apologies, it seems I've momentarily lost my train of thought. Let me quickly collect myself and resume."
+    ]
+  },
+  {
+    id: 4,
+    title: "The Misread Text - You text someone a joke. They misinterpret it and get upset.",
+    options: [
+      "OMG I'm so sorry! I didn't mean it like that at all. It was just a joke, my bad!",
+      "lol my bad if u didn't get it, but it was just a joke 😂",
+      "Oh no, I'm really sorry if that came across wrong! I was just trying to be funny, but I totally understand why you'd be upset. My bad."
+    ]
+  },
+  {
+    id: 5,
+    title: "Group Chat Blowup - Your group chat is imploding with drama and your name gets mentioned.",
+    options: [
+      "Fr like why is everyone so pressed rn chill",
+      "lol chill everyone, what's good?",
+      "I'm here to listen if anyone wants to talk it out calmly, but let's take a break from the public drama."
+    ]
+  },
+  {
+    id: 6,
+    title: "They Ghosted You - A close friend stops talking to you with no explanation.",
+    options: [
+      "Hey, I've noticed things have been quiet between us. Everything okay? I'm here if you want to talk.",
+      "K, bye then. Guess we're not friends anymore.",
+      "I'm not sure what happened, but I'm going to respect your silence. If you ever want to reconnect, you know where to find me."
+    ]
+  },
+  {
+    id: 7,
+    title: "Too Fast, Too Soon - Someone you like starts pushing you to open up fast emotionally or physically.",
+    options: [
+      "I need some time to think about this. Can we slow down a bit?",
+      "Woah, slow down there! I'm not really into rushing things.",
+      "I appreciate your enthusiasm, but I prefer to take things at a pace that feels comfortable for both of us."
+    ]
+  },
+  {
+    id: 8,
+    title: "Caught Between Two Crushes - You're vibing with two different people at the same time.",
+    options: [
+      "Bruh, this is so awkward. Like, why do I gotta choose? Can't I just chill with both?",
+      "OMG, this is so stressful! How am I supposed to pick just one? I feel like I'm gonna mess everything up.",
+      "I'm gonna take some time to get to know both of them better, without putting any pressure on myself to choose right now. See where things naturally lead."
+    ]
+  },
+  {
+    id: 9,
+    title: "Breakup in Public - Someone breaks up with you in front of people at lunch.",
+    options: [
+      "Bruh, really? In front of everyone? This is so awkward.",
+      "Good to know. Saved me the trouble later, I guess.",
+      "I wish you all the best. I'm going to grab a coffee, anyone want anything?"
+    ]
+  },
+  {
+    id: 10,
+    title: "Everyone Else Got In - You're the only one who didn't make the team or club.",
+    options: [
+      "This sucks, but I guess I'll just have to try something else.",
+      "Bummer! That totally stinks, but don't let it get you down. There are tons of other cool things to try.",
+      "That's tough, but remember, one door closing often means another one opens. This is a chance to explore new interests and discover hidden talents you didn't even know you had."
+    ]
+  }
+];
 
 export const VybeStryke = () => {
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [userProgress, setUserProgress] = useState<ChallengeProgress[]>([]);
-  const [activeTab, setActiveTab] = useState("daily");
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const { toast } = useToast();
+  const [currentScenarios, setCurrentScenarios] = useState<Scenario[]>([]);
+  const [selectedResponses, setSelectedResponses] = useState<{[key: number]: number}>({});
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
+    generateRandomScenarios();
   }, []);
 
-  useEffect(() => {
-    fetchChallenges();
-    fetchUserProgress();
-  }, []);
-
-  const fetchChallenges = async () => {
-    const { data, error } = await supabase
-      .from('vybestryke_challenges')
-      .select('*')
-      .eq('active', true)
-      .order('xp_reward', { ascending: true });
-
-    if (error) {
-      toast({
-        title: "Error loading challenges",
-        description: error.message,
-        variant: "destructive"
-      });
-    } else {
-      setChallenges(data || []);
-    }
-    setLoading(false);
+  const generateRandomScenarios = () => {
+    // Shuffle scenarios and pick 5 random ones
+    const shuffled = [...scenarios].sort(() => Math.random() - 0.5);
+    setCurrentScenarios(shuffled.slice(0, 5));
+    setSelectedResponses({});
   };
 
-  const fetchUserProgress = async () => {
-    const { data, error } = await supabase
-      .from('user_challenge_progress')
-      .select('*');
-
-    if (error) {
-      console.error("Error fetching progress:", error);
-    } else {
-      setUserProgress(data || []);
-    }
+  const handleResponseSelect = (scenarioId: number, optionIndex: number) => {
+    setSelectedResponses(prev => ({
+      ...prev,
+      [scenarioId]: optionIndex
+    }));
   };
-
-  const startChallenge = async (challengeId: string) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to start challenges",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const { error } = await supabase
-      .from('user_challenge_progress')
-      .upsert([{
-        challenge_id: challengeId,
-        user_id: user.id,
-        completed: false,
-        started_at: new Date().toISOString()
-      }], { onConflict: 'user_id,challenge_id' });
-
-    if (error) {
-      toast({
-        title: "Error starting challenge",
-        description: error.message,
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Challenge started!",
-        description: "Good luck completing this challenge!"
-      });
-      fetchUserProgress();
-    }
-  };
-
-  const completeChallenge = async (challenge: Challenge) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to complete challenges",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Mark challenge as completed
-    const { error: progressError } = await supabase
-      .from('user_challenge_progress')
-      .update({
-        completed: true,
-        completed_at: new Date().toISOString()
-      })
-      .eq('challenge_id', challenge.id)
-      .eq('user_id', user.id);
-
-    if (progressError) {
-      toast({
-        title: "Error completing challenge",
-        description: progressError.message,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Award VybeCoins
-    if (challenge.vybecoin_reward > 0) {
-      const { error: coinError } = await supabase
-        .from('coin_transactions')
-        .insert([{
-          amount: challenge.vybecoin_reward,
-          reason: `Completed challenge: ${challenge.title}`,
-          user_id: user.id
-        }]);
-
-      if (coinError) {
-        console.error("Error awarding coins:", coinError);
-      }
-    }
-
-    toast({
-      title: "Challenge completed! 🎉",
-      description: `Earned ${challenge.xp_reward} XP and ${challenge.vybecoin_reward} VybeCoins!`
-    });
-
-    fetchUserProgress();
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'text-gaming-green';
-      case 'medium': return 'text-gaming-orange';
-      case 'hard': return 'text-gaming-purple';
-      default: return 'text-muted-foreground';
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'fitness': return '💪';
-      case 'academic': return '📚';
-      case 'wellness': return '🧘';
-      case 'creativity': return '🎨';
-      default: return '⭐';
-    }
-  };
-
-  const getUserProgress = (challengeId: string) => {
-    return userProgress.find(p => p.challenge_id === challengeId);
-  };
-
-  const filteredChallenges = challenges.filter(challenge => {
-    if (activeTab === 'daily') return challenge.daily;
-    if (activeTab === 'all') return true;
-    return challenge.category === activeTab;
-  });
-
-  const completedToday = userProgress.filter(p => 
-    p.completed && 
-    p.completed_at && 
-    new Date(p.completed_at).toDateString() === new Date().toDateString()
-  ).length;
-
-  if (loading) {
-    return (
-      <div className="space-y-6 p-4">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-gaming font-bold gradient-primary bg-clip-text text-transparent mb-2">
-            VybeStryke
-          </h1>
-          <p className="text-muted-foreground">Loading challenges...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 p-4">
@@ -221,148 +133,72 @@ export const VybeStryke = () => {
         <h1 className="text-2xl font-gaming font-bold gradient-primary bg-clip-text text-transparent mb-2">
           VybeStryke
         </h1>
-        <p className="text-muted-foreground">Daily challenges to level up your life</p>
+        <p className="text-muted-foreground">Navigate life scenarios and discover your response style</p>
       </div>
 
-      {/* Daily Stats */}
-      <Card className="p-4 bg-gradient-to-r from-gaming-purple/20 to-accent/20 border-accent/30">
-        <div className="flex items-center justify-between">
-          <div className="text-center">
-            <Trophy className="w-8 h-8 text-gaming-orange mx-auto mb-1" />
-            <h3 className="font-semibold text-lg">{completedToday}</h3>
-            <p className="text-xs text-muted-foreground">Completed Today</p>
-          </div>
-          <div className="text-center">
-            <Target className="w-8 h-8 text-primary mx-auto mb-1" />
-            <h3 className="font-semibold text-lg">{challenges.filter(c => c.daily).length}</h3>
-            <p className="text-xs text-muted-foreground">Daily Challenges</p>
-          </div>
-          <div className="text-center">
-            <Star className="w-8 h-8 text-accent mx-auto mb-1" />
-            <h3 className="font-semibold text-lg">{userProgress.filter(p => p.completed).length}</h3>
-            <p className="text-xs text-muted-foreground">Total Complete</p>
-          </div>
-        </div>
+      {/* Controls */}
+      <div className="flex justify-center mb-6">
+        <Button 
+          onClick={generateRandomScenarios}
+          variant="gaming"
+          className="flex items-center gap-2"
+        >
+          <Shuffle className="w-4 h-4" />
+          New Scenarios
+        </Button>
+      </div>
+
+      {/* Scenarios Table */}
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-1/4">Scenario</TableHead>
+              <TableHead className="w-1/4">Option 1</TableHead>
+              <TableHead className="w-1/4">Option 2</TableHead>
+              <TableHead className="w-1/4">Option 3</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentScenarios.map((scenario) => (
+              <TableRow key={scenario.id}>
+                <TableCell className="font-medium align-top">
+                  <div className="flex items-start gap-2">
+                    <Brain className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-sm">{scenario.title}</span>
+                  </div>
+                </TableCell>
+                {scenario.options.map((option, index) => (
+                  <TableCell key={index} className="align-top">
+                    <Button
+                      variant={selectedResponses[scenario.id] === index ? "default" : "ghost"}
+                      size="sm"
+                      className="h-auto p-3 text-left justify-start whitespace-normal"
+                      onClick={() => handleResponseSelect(scenario.id, index)}
+                    >
+                      <span className="text-xs leading-relaxed">{option}</span>
+                    </Button>
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Card>
 
-      {/* Challenge Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="daily">Daily</TabsTrigger>
-          <TabsTrigger value="fitness">Fitness</TabsTrigger>
-          <TabsTrigger value="academic">Study</TabsTrigger>
-          <TabsTrigger value="wellness">Wellness</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="mt-6">
-          <div className="space-y-4">
-            {filteredChallenges.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Zap className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No challenges in this category</p>
-              </div>
-            ) : (
-              filteredChallenges.map((challenge) => {
-                const progress = getUserProgress(challenge.id);
-                const isCompleted = progress?.completed || false;
-                const isStarted = !!progress && !isCompleted;
-                
-                return (
-                  <Card key={challenge.id} className={`p-4 ${isCompleted ? 'bg-gaming-green/10 border-gaming-green/30' : ''}`}>
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-start gap-3 flex-1">
-                        <div className="text-2xl">{getCategoryIcon(challenge.category)}</div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold">{challenge.title}</h3>
-                            {challenge.daily && (
-                              <Badge variant="secondary" className="text-xs">Daily</Badge>
-                            )}
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}
-                            >
-                              {challenge.difficulty}
-                            </Badge>
-                          </div>
-                          
-                          <p className="text-sm text-muted-foreground mb-3">
-                            {challenge.description}
-                          </p>
-                          
-                          <div className="flex items-center gap-4 text-sm">
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-accent" />
-                              <span>{challenge.xp_reward} XP</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Coins className="w-4 h-4 text-gaming-orange" />
-                              <span>{challenge.vybecoin_reward} Coins</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="ml-4">
-                        {isCompleted ? (
-                          <div className="flex items-center gap-2 text-gaming-green">
-                            <CheckCircle className="w-5 h-5" />
-                            <span className="text-sm font-medium">Completed</span>
-                          </div>
-                        ) : isStarted ? (
-                          <Button
-                            variant="gaming"
-                            size="sm"
-                            onClick={() => completeChallenge(challenge)}
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Complete
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => startChallenge(challenge.id)}
-                          >
-                            <Play className="w-4 h-4 mr-1" />
-                            Start
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {isStarted && !isCompleted && (
-                      <div className="mt-3 p-3 bg-accent/10 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="w-4 h-4 text-accent" />
-                          <span className="text-sm font-medium">In Progress</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Started {new Date(progress.started_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
-                  </Card>
-                );
-              })
-            )}
+      {/* Response Summary */}
+      {Object.keys(selectedResponses).length > 0 && (
+        <Card className="p-4 bg-accent/10 border-accent/30">
+          <div className="flex items-center gap-3 mb-3">
+            <Zap className="w-5 h-5 text-accent" />
+            <h3 className="font-semibold">Your Response Pattern</h3>
           </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Streak Info */}
-      <Card className="p-4 bg-gaming-orange/10 border-gaming-orange/30">
-        <div className="flex items-center gap-3">
-          <Zap className="w-6 h-6 text-gaming-orange" />
-          <div>
-            <h3 className="font-semibold text-gaming-orange">Build Your Streak</h3>
-            <p className="text-xs text-muted-foreground">
-              Complete daily challenges to build streaks and earn bonus rewards!
-            </p>
-          </div>
-        </div>
-      </Card>
+          <p className="text-sm text-muted-foreground">
+            You've responded to {Object.keys(selectedResponses).length} out of {currentScenarios.length} scenarios. 
+            Each choice reveals something about how you handle different situations!
+          </p>
+        </Card>
+      )}
     </div>
   );
 };
