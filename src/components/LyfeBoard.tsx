@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
@@ -24,7 +26,11 @@ import {
   Calendar,
   Sparkles,
   Brain,
-  CheckCircle
+  CheckCircle,
+  Settings,
+  Palette,
+  Type,
+  RotateCcw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -43,11 +49,13 @@ interface AIGoal {
 
 export const LyfeBoard = () => {
   const { user, profile, refreshProfile } = useAuth();
+  const { themeSettings, updateColors, updateFonts, resetToDefault } = useTheme();
   const [aiGoals, setAiGoals] = useState<AIGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [newLevel, setNewLevel] = useState(1);
   const [showAIDialog, setShowAIDialog] = useState(false);
+  const [showThemeDialog, setShowThemeDialog] = useState(false);
   const [aiPreferences, setAiPreferences] = useState({
     difficulty: 'easy',
     timeAvailable: '30 minutes',
@@ -55,6 +63,32 @@ export const LyfeBoard = () => {
   });
   const [generatingGoals, setGeneratingGoals] = useState(false);
   const { toast } = useToast();
+
+  // Color presets for easy selection
+  const colorPresets = [
+    { name: 'Gaming Blue', primary: '212 100% 50%', accent: '195 100% 60%' },
+    { name: 'Neon Purple', primary: '270 100% 60%', accent: '285 100% 70%' },
+    { name: 'Electric Green', primary: '120 100% 50%', accent: '140 100% 60%' },
+    { name: 'Sunset Orange', primary: '25 100% 55%', accent: '35 100% 65%' },
+    { name: 'Cyber Pink', primary: '320 100% 60%', accent: '330 100% 70%' },
+    { name: 'Ocean Teal', primary: '180 100% 45%', accent: '195 100% 55%' },
+  ];
+
+  const fontOptions = {
+    primary: [
+      { name: 'Inter', value: 'Inter' },
+      { name: 'Poppins', value: 'Poppins' },
+      { name: 'Roboto', value: 'Roboto' },
+      { name: 'Montserrat', value: 'Montserrat' },
+      { name: 'Space Grotesk', value: 'Space Grotesk' },
+    ],
+    gaming: [
+      { name: 'Orbitron', value: 'Orbitron' },
+      { name: 'JetBrains Mono', value: 'JetBrains Mono' },
+      { name: 'Fira Code', value: 'Fira Code' },
+      { name: 'Space Grotesk', value: 'Space Grotesk' },
+    ]
+  };
 
   useEffect(() => {
     if (user) {
@@ -442,6 +476,211 @@ export const LyfeBoard = () => {
                 )}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* UI Customization Section */}
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 font-gaming">
+                <Settings className="w-5 h-5 text-gaming-cyan" />
+                UI Customization
+              </CardTitle>
+              <Dialog open={showThemeDialog} onOpenChange={setShowThemeDialog}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <Palette className="w-4 h-4 mr-1" />
+                    Customize
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="font-gaming flex items-center gap-2">
+                      <Palette className="w-5 h-5 text-gaming-cyan" />
+                      Customize Your Vyral
+                    </DialogTitle>
+                  </DialogHeader>
+                  
+                  <Tabs defaultValue="colors" className="space-y-4">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="colors" className="flex items-center gap-1">
+                        <Palette className="w-3 h-3" />
+                        Colors
+                      </TabsTrigger>
+                      <TabsTrigger value="fonts" className="flex items-center gap-1">
+                        <Type className="w-3 h-3" />
+                        Fonts
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {/* Colors Tab */}
+                    <TabsContent value="colors" className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium mb-3 block">Color Presets</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {colorPresets.map((preset, index) => (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              className="h-12 relative overflow-hidden"
+                              onClick={() => updateColors({ 
+                                primary: preset.primary, 
+                                accent: preset.accent 
+                              })}
+                            >
+                              <div className="absolute inset-0 flex">
+                                <div 
+                                  className="flex-1" 
+                                  style={{ backgroundColor: `hsl(${preset.primary})` }}
+                                />
+                                <div 
+                                  className="flex-1" 
+                                  style={{ backgroundColor: `hsl(${preset.accent})` }}
+                                />
+                              </div>
+                              <span className="relative z-10 text-xs font-semibold text-white mix-blend-difference">
+                                {preset.name}
+                              </span>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Current Colors</Label>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded border" 
+                                style={{ backgroundColor: `hsl(${themeSettings.colors.primary})` }}
+                              />
+                              <span>Primary</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded border" 
+                                style={{ backgroundColor: `hsl(${themeSettings.colors.accent})` }}
+                              />
+                              <span>Accent</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded border" 
+                                style={{ backgroundColor: `hsl(${themeSettings.colors.gamingPurple})` }}
+                              />
+                              <span>Purple</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded border" 
+                                style={{ backgroundColor: `hsl(${themeSettings.colors.gamingGreen})` }}
+                              />
+                              <span>Green</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    {/* Fonts Tab */}
+                    <TabsContent value="fonts" className="space-y-4">
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-sm font-medium">Primary Font (Interface)</Label>
+                          <Select
+                            value={themeSettings.primaryFont}
+                            onValueChange={(value) => updateFonts(value, themeSettings.gamingFont)}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {fontOptions.primary.map((font) => (
+                                <SelectItem key={font.value} value={font.value}>
+                                  <span style={{ fontFamily: font.value }}>{font.name}</span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label className="text-sm font-medium">Gaming Font (Headers)</Label>
+                          <Select
+                            value={themeSettings.gamingFont}
+                            onValueChange={(value) => updateFonts(themeSettings.primaryFont, value)}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {fontOptions.gaming.map((font) => (
+                                <SelectItem key={font.value} value={font.value}>
+                                  <span style={{ fontFamily: font.value }}>{font.name}</span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                          <p className="text-sm mb-2" style={{ fontFamily: themeSettings.primaryFont }}>
+                            Primary font preview
+                          </p>
+                          <p className="font-gaming text-sm" style={{ fontFamily: themeSettings.gamingFont }}>
+                            Gaming font preview
+                          </p>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={resetToDefault}
+                      className="flex-1"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        toast({
+                          title: "Theme saved!",
+                          description: "Your customizations have been saved.",
+                        });
+                        setShowThemeDialog(false);
+                      }}
+                      className="flex-1"
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <CardDescription>
+              Personalize your colors and fonts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <Palette className="w-6 h-6 mx-auto mb-1 text-primary" />
+                <p className="text-xs text-muted-foreground">Theme</p>
+                <p className="text-sm font-semibold">Custom</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <Type className="w-6 h-6 mx-auto mb-1 text-accent" />
+                <p className="text-xs text-muted-foreground">Font</p>
+                <p className="text-sm font-semibold">{themeSettings.primaryFont}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
