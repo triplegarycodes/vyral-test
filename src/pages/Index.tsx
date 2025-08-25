@@ -11,6 +11,7 @@ import { MoneyHub } from "@/components/MoneyHub";
 import { VybeLink } from "@/components/VybeLink";
 import { Navigation } from "@/components/Navigation";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { CustomizationWidget } from "@/components/CustomizationWidget";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -72,6 +73,9 @@ const Index = () => {
       <main className="max-w-md mx-auto">
         {renderContent()}
       </main>
+
+      {/* Customization Widget - Persistent across all tabs */}
+      <CustomizationWidget />
 
       {/* Navigation */}
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
