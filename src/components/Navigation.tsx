@@ -21,14 +21,13 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'vybezone', icon: Users, label: 'VybeZone' },
     { id: 'vybestryke', icon: Zap, label: 'VybeStryke' },
     { id: 'vshop', icon: ShoppingBag, label: 'V-Shop' },
-    { id: 'money', icon: DollarSign, label: 'Money' },
-    { id: 'vybelink', icon: Heart, label: 'VybeLink' }
+    { id: 'money', icon: DollarSign, label: '$-Lyfe' }
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border px-2 py-3 z-50">
       <div className="flex justify-around items-center max-w-md mx-auto">
-        {navItems.slice(0, 5).map((item) => (
+        {navItems.slice(0, 6).map((item) => (
           <Button
             key={item.id}
             variant={activeTab === item.id ? "gaming" : "ghost"}
@@ -42,22 +41,6 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
           >
             <item.icon className="w-4 h-4" />
             <span className="text-xs font-medium truncate">{item.label}</span>
-          </Button>
-        ))}
-      </div>
-      
-      {/* Extended nav for tablet/desktop */}
-      <div className="hidden md:flex justify-center mt-2 gap-2">
-        {navItems.slice(5).map((item) => (
-          <Button
-            key={item.id}
-            variant={activeTab === item.id ? "gaming" : "outline"}
-            size="sm"
-            onClick={() => onTabChange(item.id)}
-            className="flex items-center gap-2"
-          >
-            <item.icon className="w-4 h-4" />
-            {item.label}
           </Button>
         ))}
       </div>

@@ -8,7 +8,7 @@ import { VybeZone } from "@/components/VybeZone";
 import { VybeStryke } from "@/components/VybeStryke";
 import { VShop } from "@/components/VShop";
 import { MoneyHub } from "@/components/MoneyHub";
-import { VybeLink } from "@/components/VybeLink";
+import { StatsDock } from "@/components/StatsDock";
 import { Navigation } from "@/components/Navigation";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CustomizationWidget } from "@/components/CustomizationWidget";
@@ -60,15 +60,13 @@ const Index = () => {
         return <VShop />;
       case 'money':
         return <MoneyHub />;
-      case 'vybelink':
-        return <VybeLink />;
       default:
         return <LyfeBoard />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       {/* Main Content */}
       <main className="max-w-md mx-auto">
         {renderContent()}
@@ -76,6 +74,9 @@ const Index = () => {
 
       {/* Customization Widget - Persistent across all tabs */}
       <CustomizationWidget />
+
+      {/* Stats Dock - Persistent across all tabs */}
+      <StatsDock />
 
       {/* Navigation */}
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
