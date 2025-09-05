@@ -360,9 +360,23 @@ export const VybeStryke = () => {
     generateNewScenario();
   }, []);
 
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const generateNewScenario = () => {
     const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-    setCurrentScenario(randomScenario);
+    // Shuffle the answer choices for randomization
+    const shuffledChoices = shuffleArray(randomScenario.choices);
+    setCurrentScenario({
+      ...randomScenario,
+      choices: shuffledChoices
+    });
     setSelectedChoice(null);
     setShowResult(false);
   };

@@ -39,7 +39,7 @@ export const CustomizationWidget = () => {
   };
 
   return (
-    <div className="fixed bottom-20 right-4 z-50">
+    <div className="fixed top-4 right-4 z-50">
       <Dialog open={showThemeDialog} onOpenChange={setShowThemeDialog}>
         <DialogTrigger asChild>
           <Button 
