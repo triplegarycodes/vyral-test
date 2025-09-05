@@ -14,8 +14,7 @@ interface Profile {
   xp: number;
   vybecoin_balance: number;
   streak_count: number;
-  last_activity_date: string | null;
-  study_preferences: any;
+  total_points: number;
   created_at: string;
   updated_at: string;
 }
@@ -84,7 +83,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           xp: 0,
           vybecoin_balance: 100, // Starting bonus
           streak_count: 0,
-          study_preferences: {}
+          total_points: 0
         }])
         .select()
         .single();

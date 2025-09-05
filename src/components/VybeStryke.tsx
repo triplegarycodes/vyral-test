@@ -22,109 +22,329 @@ const scenarios: VybeStrykeScenario[] = [
     title: "Late Night Loop",
     situation: "It's midnight. You're doom-scrolling instead of sleeping. A test is tomorrow.",
     choices: [
-      { text: "Why am I still awake? Ughhh... I'll just cram all night and hope for the best.", isCorrect: false },
-      { text: "Time to hit the hay, I'm gonna crush this test! A good night's sleep is my secret weapon.", isCorrect: true, vcoins: 50 },
-      { text: "Let's get this test over with! Time to stay up all night and cram everything in.", isCorrect: false },
-      { text: "One more TikTok won't hurt... I can study in the morning during breakfast.", isCorrect: false }
+      { text: "One more TikTok won't hurt... I can study in the morning during breakfast.", isCorrect: false },
+      { text: "Let me put my phone down and get some sleep. My brain needs rest to perform tomorrow.", isCorrect: true, vcoins: 50 },
+      { text: "I'll just cram all night and hope for the best with energy drinks.", isCorrect: false },
+      { text: "Maybe I can sleep for 2 hours and then study until the test.", isCorrect: false }
     ]
   },
   {
     id: 2,
-    title: "Pop Quiz Panic", 
+    title: "Pop Quiz Panic",
     situation: "You're hit with a surprise quiz in your hardest class. You only studied for a different subject.",
     choices: [
-      { text: "Ugh, seriously?! A pop quiz in THIS class? And I just spent all last night studying for history. This is NOT good.", isCorrect: false },
-      { text: "Oh, sweet! A pop quiz! I totally vibe with this, even if it's not what I studied. I'm feeling pretty confident, actually.", isCorrect: false },
-      { text: "Alright, deep breaths. It's a pop quiz, and I didn't study for this subject. Time to apply what I DO know and focus on the questions I can answer. No use panicking now.", isCorrect: true, vcoins: 50 },
-      { text: "I'll just wing it and copy from whoever sits next to me. They probably studied.", isCorrect: false }
+      { text: "I'll just wing it and copy from whoever sits next to me.", isCorrect: false },
+      { text: "Take a deep breath and use what I do know. No use panicking now.", isCorrect: true, vcoins: 50 },
+      { text: "Ugh seriously?! This is so unfair, I studied for history all night!", isCorrect: false },
+      { text: "I'll make up answers that sound smart and hope for partial credit.", isCorrect: false }
     ]
   },
   {
     id: 3,
-    title: "Mind Blank Presentation",
-    situation: "You're presenting a project you've worked really hard on, and halfway through, you completely blank on your next point, feeling everyone's eyes on you.",
+    title: "Mind Blank During Presentation",
+    situation: "You're mid-sentence in front of the class and suddenly forget everything.",
     choices: [
-      { text: "Uh, sorry guys, my brain just totally blanked. What was I even talking about?", isCorrect: false },
-      { text: "Hold on, I got this. Just a quick brain fart.", isCorrect: false },
-      { text: "My apologies, it seems I've momentarily lost my train of thought. Let me quickly collect myself and resume.", isCorrect: true, vcoins: 50 },
-      { text: "Um... yeah so... anyone have any questions while I figure out where I was going with this?", isCorrect: false }
+      { text: "Um... sorry guys, my brain just totally blanked. What was I talking about?", isCorrect: false },
+      { text: "Let me take a moment to collect my thoughts and continue from where I left off.", isCorrect: true, vcoins: 50 },
+      { text: "Anyone have questions while I figure out where I was going with this?", isCorrect: false },
+      { text: "I'm just going to start over from the beginning, this is embarrassing.", isCorrect: false }
     ]
   },
   {
     id: 4,
-    title: "The Misread Meme",
-    situation: "You text your crush a meme you think is hilarious, but they respond with a confused 'What's that supposed to mean?' and now you're spiraling, wondering if you just ruined everything.",
+    title: "The Misread Text",
+    situation: "You text someone a joke. They misinterpret it and get upset.",
     choices: [
-      { text: "OMG I'm so sorry! I didn't mean it like that at all. It was just a joke, my bad!", isCorrect: false },
+      { text: "Never mind, forget I sent it. It wasn't that funny anyway.", isCorrect: false },
+      { text: "I'm sorry that came across wrong! I was trying to be funny but I understand why you're upset.", isCorrect: true, vcoins: 50 },
       { text: "lol my bad if u didn't get it, but it was just a joke 😂", isCorrect: false },
-      { text: "Oh no, I'm really sorry if that came across wrong! I was just trying to be funny, but I totally understand why you'd be upset. My bad.", isCorrect: true, vcoins: 50 },
-      { text: "Never mind, forget I sent it. It wasn't that funny anyway.", isCorrect: false }
+      { text: "You're being way too sensitive, it was obviously a joke.", isCorrect: false }
     ]
   },
   {
     id: 5,
     title: "Group Chat Blowup",
-    situation: "You open your phone to see 50+ unread messages in your main friend group chat. Your two best friends are in an all-caps fight about a party invite, and everyone else is taking sides. You get a direct message from one of them saying, 'Are you with me or them?'",
+    situation: "Your group chat is imploding with drama and your name gets mentioned.",
     choices: [
-      { text: "Fr like why is everyone so pressed rn chill", isCorrect: false },
-      { text: "lol chill everyone, what's good?", isCorrect: false },
-      { text: "I'm here to listen if anyone wants to talk it out calmly, but let's take a break from the public drama.", isCorrect: true, vcoins: 50 },
-      { text: "I'm staying out of this mess. Y'all figure it out.", isCorrect: false }
+      { text: "I'm staying out of this mess. Y'all figure it out.", isCorrect: false },
+      { text: "Let's take a break from the drama and talk this out calmly when everyone's cooled down.", isCorrect: true, vcoins: 50 },
+      { text: "Why is everyone so pressed right now? Chill out!", isCorrect: false },
+      { text: "I can't believe my name got dragged into this. Who said what about me?", isCorrect: false }
     ]
   },
   {
     id: 6,
-    title: "Silent Treatment", 
-    situation: "You're at a party and your best friend completely ignores you the entire night, then blocks you on social media without a word.",
+    title: "They Ghosted You",
+    situation: "A close friend stops talking to you with no explanation.",
     choices: [
-      { text: "Hey, I've noticed things have been quiet between us. Everything okay? I'm here if you want to talk.", isCorrect: true, vcoins: 50 },
+      { text: "Two can play this game. I'll block them back and see how they like it.", isCorrect: false },
+      { text: "I'll give them space but let them know I'm here if they want to talk.", isCorrect: true, vcoins: 50 },
       { text: "K, bye then. Guess we're not friends anymore.", isCorrect: false },
-      { text: "I'm not sure what happened, but I'm going to respect your silence. If you ever want to reconnect, you know where to find me.", isCorrect: false },
-      { text: "Two can play this game. I'll block them back and see how they like it.", isCorrect: false }
+      { text: "I'm going to keep texting until they respond and explain what happened.", isCorrect: false }
     ]
   },
   {
     id: 7,
-    title: "Party Pressure",
-    situation: "You're at a party, and someone you barely know hands you a red solo cup, saying 'Take a sip!' Your crush is looking right at you, and you feel everyone's eyes on you, waiting to see what you'll do.",
+    title: "Too Fast, Too Soon",
+    situation: "Someone you like starts pushing you to open up fast emotionally or physically.",
     choices: [
-      { text: "I need some time to think about this. Can we slow down a bit?", isCorrect: false },
-      { text: "Woah, slow down there! I'm not really into rushing things.", isCorrect: false },
-      { text: "Nah, I'm good. Thanks though! Just sticking to water tonight.", isCorrect: true, vcoins: 50 },
-      { text: "Sure, why not? It's just one drink.", isCorrect: false }
+      { text: "I guess if they really like me, I should go along with what they want.", isCorrect: false },
+      { text: "I need to slow things down. I'm not comfortable rushing this.", isCorrect: true, vcoins: 50 },
+      { text: "Maybe they'll lose interest if I don't keep up with their pace.", isCorrect: false },
+      { text: "I'll just go with it and see what happens.", isCorrect: false }
     ]
   },
   {
     id: 8,
-    title: "New Romance Rumble",
-    situation: "You're navigating feelings for two different people at school, one who's super outgoing and the other who's more reserved, and you're constantly worried about hurting someone or sending mixed signals.",
+    title: "Caught Between Two Crushes",
+    situation: "You're vibing with two different people at the same time.",
     choices: [
-      { text: "Bruh, this is so awkward. Like, why do I gotta choose? Can't I just chill with both?", isCorrect: false },
-      { text: "OMG, this is so stressful! How am I supposed to pick just one? I feel like I'm gonna mess everything up.", isCorrect: false },
-      { text: "I'm gonna take some time to get to know both of them better, without putting any pressure on myself to choose right now. See where things naturally lead.", isCorrect: true, vcoins: 50 },
-      { text: "I'll just string them both along until I figure out which one I like more.", isCorrect: false }
+      { text: "I'll just string them both along until I figure out which one I like more.", isCorrect: false },
+      { text: "I need to be honest with myself about my feelings and not lead anyone on.", isCorrect: true, vcoins: 50 },
+      { text: "Can't I just chill with both? Why do I have to choose right now?", isCorrect: false },
+      { text: "I'll see which one makes the first move and go with that.", isCorrect: false }
     ]
   },
   {
     id: 9,
-    title: "Public Breakup Blues",
-    situation: "You're at the busiest lunch table, and your partner suddenly announces they're breaking up with you, right in front of everyone.",
+    title: "Breakup in Public",
+    situation: "Someone breaks up with you in front of people at lunch.",
     choices: [
-      { text: "Bruh, really? In front of everyone? This is so awkward.", isCorrect: false },
+      { text: "Are you serious right now? You couldn't wait until we were alone?", isCorrect: false },
+      { text: "I understand. I hope you find what you're looking for.", isCorrect: true, vcoins: 50 },
       { text: "Good to know. Saved me the trouble later, I guess.", isCorrect: false },
-      { text: "I wish you all the best. I'm going to grab a coffee, anyone want anything?", isCorrect: true, vcoins: 50 },
-      { text: "Are you serious right now? You couldn't wait until we were alone?", isCorrect: false }
+      { text: "This is so awkward, everyone is staring at us.", isCorrect: false }
     ]
   },
   {
     id: 10,
-    title: "Scholarship Secret",
-    situation: "You've been secretly applying for scholarships, and you just got an email saying you won a big one, but you haven't told your parents you applied.",
+    title: "Everyone Else Got In",
+    situation: "You're the only one who didn't make the team or club.",
     choices: [
-      { text: "I'll just keep it secret until graduation and surprise them then.", isCorrect: false },
-      { text: "Time to come clean and share the good news! They'll be proud even if they're surprised.", isCorrect: true, vcoins: 50 },
-      { text: "I'll tell them I just heard about this scholarship today and applied on a whim.", isCorrect: false },
-      { text: "Maybe I'll wait until I actually need the money for college to tell them.", isCorrect: false }
+      { text: "This is so unfair. The selection process must have been rigged.", isCorrect: false },
+      { text: "I'm disappointed, but I'll use this as motivation to improve and try again.", isCorrect: true, vcoins: 50 },
+      { text: "I never really wanted to be part of it anyway.", isCorrect: false },
+      { text: "I'm going to find out exactly why I didn't make it and argue my case.", isCorrect: false }
+    ]
+  },
+  {
+    id: 11,
+    title: "Comment Section Spiral",
+    situation: "Your video goes viral but the comments start roasting you.",
+    choices: [
+      { text: "I'm going to reply to every single negative comment and defend myself.", isCorrect: false },
+      { text: "I'll turn off comments and focus on the positive messages I received.", isCorrect: true, vcoins: 50 },
+      { text: "Time to delete everything and pretend this never happened.", isCorrect: false },
+      { text: "I'll make another video calling out all the haters.", isCorrect: false }
+    ]
+  },
+  {
+    id: 12,
+    title: "I'm Not Like Them",
+    situation: "You feel fundamentally different from your friend group.",
+    choices: [
+      { text: "I need to change myself to fit in better with them.", isCorrect: false },
+      { text: "It's okay to be different. I'll embrace who I am while maintaining our friendship.", isCorrect: true, vcoins: 50 },
+      { text: "I should find new friends who are more like me.", isCorrect: false },
+      { text: "I'll just pretend to be someone I'm not when I'm with them.", isCorrect: false }
+    ]
+  },
+  {
+    id: 13,
+    title: "The GPA Gamble",
+    situation: "You're failing a class and need to convince the teacher to help you pass.",
+    choices: [
+      { text: "I'll make up a sob story about personal problems to get sympathy.", isCorrect: false },
+      { text: "I'll be honest about my struggles and ask for specific help to improve.", isCorrect: true, vcoins: 50 },
+      { text: "I'll blame the teacher's teaching methods for my poor performance.", isCorrect: false },
+      { text: "I'll offer to do extra credit work even if I haven't done the regular work.", isCorrect: false }
+    ]
+  },
+  {
+    id: 14,
+    title: "Too Many APs",
+    situation: "You're overloaded with hard classes but dropping one feels like failure.",
+    choices: [
+      { text: "I'll just power through and hope I don't burn out completely.", isCorrect: false },
+      { text: "It's better to do well in fewer classes than poorly in many. I'll drop one.", isCorrect: true, vcoins: 50 },
+      { text: "I'll get tutoring for all my classes and spend every free moment studying.", isCorrect: false },
+      { text: "I'll ask friends to help me cheat on assignments to keep up.", isCorrect: false }
+    ]
+  },
+  {
+    id: 15,
+    title: "Plagiarism Temptation",
+    situation: "You forgot your essay and AI is right there to write it for you.",
+    choices: [
+      { text: "Just this once won't hurt. I'll use AI and edit it a bit.", isCorrect: false },
+      { text: "I'll be honest with my teacher about forgetting and ask for an extension.", isCorrect: true, vcoins: 50 },
+      { text: "I'll quickly write something terrible and submit it for partial credit.", isCorrect: false },
+      { text: "I'll copy from online sources and hope the teacher doesn't notice.", isCorrect: false }
+    ]
+  },
+  {
+    id: 16,
+    title: "Injury Denial",
+    situation: "You get hurt during practice but don't want to lose your spot.",
+    choices: [
+      { text: "I'll just take some painkillers and push through the pain.", isCorrect: false },
+      { text: "I need to tell the coach about my injury and get proper treatment.", isCorrect: true, vcoins: 50 },
+      { text: "I'll hide the injury and hope it heals on its own.", isCorrect: false },
+      { text: "I'll play through the pain and deal with consequences later.", isCorrect: false }
+    ]
+  },
+  {
+    id: 17,
+    title: "Bench Warmer Blues",
+    situation: "You try hard but still don't get any playing time.",
+    choices: [
+      { text: "I'll confront the coach and demand more playing time.", isCorrect: false },
+      { text: "I'll ask the coach what specific skills I need to work on to earn more time.", isCorrect: true, vcoins: 50 },
+      { text: "This is pointless. I'm going to quit and find something else to do.", isCorrect: false },
+      { text: "I'll just show up to practice but stop trying as hard.", isCorrect: false }
+    ]
+  },
+  {
+    id: 18,
+    title: "Toxic Teammate",
+    situation: "A teammate bullies others but is the coach's favorite.",
+    choices: [
+      { text: "I'll stay quiet to avoid becoming their next target.", isCorrect: false },
+      { text: "I'll document the behavior and speak with the coach privately about it.", isCorrect: true, vcoins: 50 },
+      { text: "I'll confront them directly in front of everyone.", isCorrect: false },
+      { text: "I'll start bullying them back to give them a taste of their own medicine.", isCorrect: false }
+    ]
+  },
+  {
+    id: 19,
+    title: "They Want You to Steal",
+    situation: "Your friends dare you to steal as a joke.",
+    choices: [
+      { text: "It's just a small thing, no one will miss it.", isCorrect: false },
+      { text: "Nah, I'm not into that. Let's find something else fun to do.", isCorrect: true, vcoins: 50 },
+      { text: "I'll do it just this once to prove I'm not a chicken.", isCorrect: false },
+      { text: "Fine, but if we get caught, you're taking the blame.", isCorrect: false }
+    ]
+  },
+  {
+    id: 20,
+    title: "Party Pressure",
+    situation: "You're handed alcohol at a party. Everyone's watching.",
+    choices: [
+      { text: "Sure, why not? It's just one drink.", isCorrect: false },
+      { text: "Nah, I'm good. Thanks though! Just sticking to soda tonight.", isCorrect: true, vcoins: 50 },
+      { text: "I'll pretend to drink it but just hold the cup.", isCorrect: false },
+      { text: "I'll take it so I don't look lame, but pour it out when no one's looking.", isCorrect: false }
+    ]
+  },
+  {
+    id: 21,
+    title: "Witnessed Something Wrong",
+    situation: "You saw something illegal or unsafe at school.",
+    choices: [
+      { text: "It's not my business. I'll just pretend I didn't see anything.", isCorrect: false },
+      { text: "I need to report this to someone who can handle it properly.", isCorrect: true, vcoins: 50 },
+      { text: "I'll tell my friends about it but not get involved myself.", isCorrect: false },
+      { text: "I'll handle it myself and confront the person directly.", isCorrect: false }
+    ]
+  },
+  {
+    id: 22,
+    title: "Parents Don't Get It",
+    situation: "Your ADHD makes focus hard but they say 'just try harder.'",
+    choices: [
+      { text: "They're right, I just need to work harder and stop making excuses.", isCorrect: false },
+      { text: "I'll help them understand ADHD better and work together on solutions.", isCorrect: true, vcoins: 50 },
+      { text: "Fine, I'll just struggle in silence and not ask for help anymore.", isCorrect: false },
+      { text: "I'll get angry and tell them they don't understand anything.", isCorrect: false }
+    ]
+  },
+  {
+    id: 23,
+    title: "Sibling Rivalry Heat-Up",
+    situation: "Your sibling gets more praise, awards, and attention.",
+    choices: [
+      { text: "I'll try to sabotage their success so I look better by comparison.", isCorrect: false },
+      { text: "I'll focus on my own growth and celebrate both our achievements.", isCorrect: true, vcoins: 50 },
+      { text: "I'll act out to get attention, even if it's negative attention.", isCorrect: false },
+      { text: "I'll just give up trying since they're clearly the favorite.", isCorrect: false }
+    ]
+  },
+  {
+    id: 24,
+    title: "Punished for Telling the Truth",
+    situation: "You're honest about something and still get in trouble.",
+    choices: [
+      { text: "I'll never tell the truth again if this is what happens.", isCorrect: false },
+      { text: "Being honest was still the right choice, even if the outcome wasn't what I hoped.", isCorrect: true, vcoins: 50 },
+      { text: "I'll make sure to lie better next time so I don't get caught.", isCorrect: false },
+      { text: "This is so unfair! I'm going to make them pay for punishing my honesty.", isCorrect: false }
+    ]
+  },
+  {
+    id: 25,
+    title: "Anxiety Attack During Class",
+    situation: "You start spiraling and the teacher calls on you.",
+    choices: [
+      { text: "I'll just mumble something and hope they move on quickly.", isCorrect: false },
+      { text: "I'll take a deep breath and ask for a moment to collect myself.", isCorrect: true, vcoins: 50 },
+      { text: "I'll make up an excuse about feeling sick and leave the room.", isCorrect: false },
+      { text: "I'll just freeze up and not say anything at all.", isCorrect: false }
+    ]
+  },
+  {
+    id: 26,
+    title: "Public Tears",
+    situation: "You cry and people laugh.",
+    choices: [
+      { text: "I'll run away and skip the rest of the day.", isCorrect: false },
+      { text: "I'll acknowledge my feelings are valid and find a trusted adult to talk to.", isCorrect: true, vcoins: 50 },
+      { text: "I'll get angry and yell at everyone who laughed.", isCorrect: false },
+      { text: "I'll laugh along and pretend it doesn't bother me.", isCorrect: false }
+    ]
+  },
+  {
+    id: 27,
+    title: "Assignment Snowball",
+    situation: "One missed assignment snowballs into panic.",
+    choices: [
+      { text: "I'll just give up since I'm already behind anyway.", isCorrect: false },
+      { text: "I'll talk to my teachers and create a realistic plan to catch up.", isCorrect: true, vcoins: 50 },
+      { text: "I'll try to do everything at once and probably do it all poorly.", isCorrect: false },
+      { text: "I'll copy assignments from friends to catch up quickly.", isCorrect: false }
+    ]
+  },
+  {
+    id: 28,
+    title: "Dream vs. Safety",
+    situation: "You want to follow your dreams but your family expects a safe path.",
+    choices: [
+      { text: "I'll just do what my family wants to avoid conflict.", isCorrect: false },
+      { text: "I'll have an honest conversation about my dreams and try to find a compromise.", isCorrect: true, vcoins: 50 },
+      { text: "I'll secretly pursue my dreams while pretending to follow their plan.", isCorrect: false },
+      { text: "I'll rebel completely and do exactly the opposite of what they want.", isCorrect: false }
+    ]
+  },
+  {
+    id: 29,
+    title: "Dream College Rejection",
+    situation: "Your dream college says no to getting in :(",
+    choices: [
+      { text: "My life is over. This was my only plan and now I have nothing.", isCorrect: false },
+      { text: "This is disappointing, but I'll explore other great options and opportunities.", isCorrect: true, vcoins: 50 },
+      { text: "I'll take a gap year and reapply next year with a better application.", isCorrect: false },
+      { text: "I'll try to find a way to appeal the decision or transfer in later.", isCorrect: false }
+    ]
+  },
+  {
+    id: 30,
+    title: "Risky Opportunity",
+    situation: "You get a chance to leave your current life behind for a risky opportunity.",
+    choices: [
+      { text: "I'll jump at it without thinking about the consequences.", isCorrect: false },
+      { text: "I'll carefully weigh the pros and cons before making this big decision.", isCorrect: true, vcoins: 50 },
+      { text: "It's too scary. I'll stick with what I know even if it's not exciting.", isCorrect: false },
+      { text: "I'll let someone else decide for me since I can't choose.", isCorrect: false }
     ]
   }
 ];
