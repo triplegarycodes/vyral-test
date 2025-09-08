@@ -5,7 +5,8 @@ import {
   Zap, 
   ShoppingBag, 
   DollarSign, 
-  Heart 
+  Palette,
+  Feather
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,12 +17,12 @@ interface NavigationProps {
 
 export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   const navItems = [
-    { id: 'lyfeboard', icon: Home, label: 'LyfeBoard' },
-    { id: 'lyfetree', icon: TreePine, label: 'LyfeTree' },
-    { id: 'vybezone', icon: Users, label: 'VybeZone' },
-    { id: 'vybestryke', icon: Zap, label: 'VybeStryke' },
-    { id: 'vshop', icon: ShoppingBag, label: 'V-Shop' },
-    { id: 'money', icon: DollarSign, label: '$-Lyfe' }
+    { id: 'lyfeboard', icon: Home, label: 'Board' },
+    { id: 'lyfetree', icon: TreePine, label: 'Tree' },
+    { id: 'vybezone', icon: Users, label: 'Zone' },
+    { id: 'vybestryke', icon: Zap, label: 'Stryke' },
+    { id: 'bvyral', icon: Palette, label: 'B-Vyral' },
+    { id: 'skrybe', icon: Feather, label: 'Skrybe' }
   ];
 
   return (

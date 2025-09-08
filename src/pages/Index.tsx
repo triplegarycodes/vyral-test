@@ -6,6 +6,8 @@ import { LyfeBoard } from "@/components/LyfeBoard";
 import { LyfeTree } from "@/components/LyfeTree";
 import { VybeZone } from "@/components/VybeZone";
 import { VybeStryke } from "@/components/VybeStryke";
+import { BVyral } from "@/components/BVyral";
+import { Skrybe } from "@/components/Skrybe";
 import { VShop } from "@/components/VShop";
 import { MoneyHub } from "@/components/MoneyHub";
 import { StatsDock } from "@/components/StatsDock";
@@ -60,6 +62,10 @@ const Index = () => {
         return <VShop />;
       case 'money':
         return <MoneyHub />;
+      case 'bvyral':
+        return <BVyral />;
+      case 'skrybe':
+        return <Skrybe />;
       default:
         return <LyfeBoard />;
     }
