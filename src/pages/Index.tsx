@@ -9,7 +9,7 @@ import { VybeStryke } from "@/components/VybeStryke";
 import { BVyral } from "@/components/BVyral";
 import { Skrybe } from "@/components/Skrybe";
 import { VShop } from "@/components/VShop";
-import { MoneyHub } from "@/components/MoneyHub";
+import { MoneyMoves } from "@/components/MoneyMoves";
 import { StatsDock } from "@/components/StatsDock";
 import { Navigation } from "@/components/Navigation";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -18,7 +18,7 @@ import { CustomizationWidget } from "@/components/CustomizationWidget";
 const Index = () => {
   const { user, loading } = useAuth();
   const [showWelcome, setShowWelcome] = useState(true);
-  const [activeTab, setActiveTab] = useState('lyfeboard');
+  const [activeTab, setActiveTab] = useState('vshop');
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -50,24 +50,24 @@ const Index = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'vshop':
+        return <VShop />;
       case 'lyfeboard':
         return <LyfeBoard />;
       case 'lyfetree':
         return <LyfeTree />;
+      case 'moneymoves':
+        return <MoneyMoves />;
+      case 'skrybe':
+        return <Skrybe />;
       case 'vybezone':
         return <VybeZone />;
       case 'vybestryke':
         return <VybeStryke />;
-      case 'vshop':
-        return <VShop />;
-      case 'money':
-        return <MoneyHub />;
       case 'bvyral':
         return <BVyral />;
-      case 'skrybe':
-        return <Skrybe />;
       default:
-        return <LyfeBoard />;
+        return <VShop />;
     }
   };
 
