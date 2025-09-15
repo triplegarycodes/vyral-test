@@ -134,11 +134,11 @@ export const MoneyMoves = () => {
 
       if (preferences?.custom_quote_collections && Array.isArray(preferences.custom_quote_collections)) {
         const savedProgress = preferences.custom_quote_collections.find(
-          (item: any) => item.type === 'money_moves_progress'
+          (item: any) => item?.type === 'money_moves_progress'
         );
         
-        if (savedProgress) {
-          setUserProgress(savedProgress.data);
+        if (savedProgress && typeof savedProgress === 'object' && savedProgress !== null && 'data' in savedProgress) {
+          setUserProgress(savedProgress.data as unknown as UserProgress);
         }
       }
     }
@@ -198,11 +198,14 @@ export const MoneyMoves = () => {
       .eq('user_id', user.id)
       .single();
 
-    const collections = Array.isArray(preferences?.custom_quote_collections) ? preferences.custom_quote_collections : [];
-    const progressIndex = collections.findIndex((item: any) => item.type === 'money_moves_progress');
+    const collections = Array.isArray(preferences?.custom_quote_collections) ? [...preferences.custom_quote_collections] : [];
+    const progressIndex = collections.findIndex((item: any) => item?.type === 'money_moves_progress');
     
     if (progressIndex >= 0) {
-      collections[progressIndex].data = newProgress;
+      collections[progressIndex] = {
+        type: 'money_moves_progress',
+        data: newProgress
+      };
     } else {
       collections.push({
         type: 'money_moves_progress',
