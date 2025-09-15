@@ -27,7 +27,7 @@ export const VShop = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
-  const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
+  const [purchasedItems, setPurchasedItems] = useState<{[key: string]: number}>({});
   const { toast } = useToast();
 
   // 8 unique and fun shop items
@@ -142,10 +142,21 @@ export const VShop = () => {
       setUserProfile(profile);
     }
 
-    // For now, we'll use local storage to track purchases
-    const storedPurchases = localStorage.getItem(`purchases_${user.id}`);
-    if (storedPurchases) {
-      setPurchasedItems(new Set(JSON.parse(storedPurchases)));
+    // Fetch purchased items from database
+    const { data: purchases, error: purchaseError } = await supabase
+      .from('shop_purchases')
+      .select('item_id, quantity')
+      .eq('user_id', user.id);
+
+    if (purchaseError) {
+      console.error('Error fetching purchases:', purchaseError);
+    } else {
+      // Convert to the format our component expects
+      const purchaseMap: {[key: string]: number} = {};
+      purchases?.forEach(purchase => {
+        purchaseMap[purchase.item_id] = (purchaseMap[purchase.item_id] || 0) + purchase.quantity;
+      });
+      setPurchasedItems(purchaseMap);
     }
 
     setLoading(false);
@@ -172,7 +183,7 @@ export const VShop = () => {
     }
 
     // Check if item is already purchased and not stackable
-    if (!item.stackable && purchasedItems.has(item.id)) {
+    if (!item.stackable && purchasedItems[item.id] > 0) {
       toast({
         title: "Already Owned",
         description: "You already own this item!",
@@ -197,6 +208,26 @@ export const VShop = () => {
       return;
     }
 
+    // Record the purchase in the database
+    const { error: purchaseError } = await supabase
+      .from('shop_purchases')
+      .insert({
+        user_id: user.id,
+        item_id: item.id,
+        item_name: item.name,
+        price_paid: item.price,
+        metadata: { category: item.category, rarity: item.rarity }
+      });
+
+    if (purchaseError) {
+      toast({
+        title: "Purchase failed",
+        description: purchaseError.message,
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Record coin transaction
     const { error: transactionError } = await supabase
       .from('coin_transactions')
@@ -212,11 +243,10 @@ export const VShop = () => {
 
     // Update local state
     setUserProfile(prev => prev ? { ...prev, vybecoin_balance: newBalance } : null);
-    if (!item.stackable) {
-      const newPurchases = new Set([...purchasedItems, item.id]);
-      setPurchasedItems(newPurchases);
-      localStorage.setItem(`purchases_${user.id}`, JSON.stringify([...newPurchases]));
-    }
+    
+    const newPurchasedItems = { ...purchasedItems };
+    newPurchasedItems[item.id] = (newPurchasedItems[item.id] || 0) + 1;
+    setPurchasedItems(newPurchasedItems);
 
     toast({
       title: "Purchase successful! 🎉",
@@ -315,7 +345,7 @@ export const VShop = () => {
             ) : (
               filteredItems.map((item) => {
                 const canAfford = (userProfile?.vybecoin_balance || 0) >= item.price;
-                const isOwned = !item.stackable && purchasedItems.has(item.id);
+                const isOwned = !item.stackable && (purchasedItems[item.id] || 0) > 0;
                 
                 return (
                   <Card key={item.id} className={`p-4 hover:border-accent/50 transition-colors ${isOwned ? 'opacity-60' : ''}`}>

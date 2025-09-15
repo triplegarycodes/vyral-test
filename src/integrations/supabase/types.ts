@@ -258,6 +258,48 @@ export type Database = {
           },
         ]
       }
+      content_flags: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          flag_description: string | null
+          flag_reason: string
+          id: string
+          reporter_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          flag_description?: string | null
+          flag_reason: string
+          id?: string
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          flag_description?: string | null
+          flag_reason?: string
+          id?: string
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       content_moderation: {
         Row: {
           content_text: string
@@ -1066,6 +1108,39 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_purchases: {
+        Row: {
+          created_at: string | null
+          id: string
+          item_id: string
+          item_name: string
+          metadata: Json | null
+          price_paid: number
+          quantity: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          item_id: string
+          item_name: string
+          metadata?: Json | null
+          price_paid: number
+          quantity?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          item_name?: string
+          metadata?: Json | null
+          price_paid?: number
+          quantity?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       space_members: {
         Row: {
           id: string
@@ -1535,6 +1610,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_rate_limits: {
+        Row: {
+          action_type: string
+          count: number | null
+          created_at: string | null
+          id: string
+          user_id: string
+          window_start: string | null
+        }
+        Insert: {
+          action_type: string
+          count?: number | null
+          created_at?: string | null
+          id?: string
+          user_id: string
+          window_start?: string | null
+        }
+        Update: {
+          action_type?: string
+          count?: number | null
+          created_at?: string | null
+          id?: string
+          user_id?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       user_spaces: {
         Row: {
           created_at: string
@@ -1791,6 +1893,10 @@ export type Database = {
       calculate_vybetree_score: {
         Args: { user_uuid: string }
         Returns: number
+      }
+      moderate_content: {
+        Args: { content_text: string }
+        Returns: Json
       }
     }
     Enums: {

@@ -221,8 +221,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(session?.user ?? null);
         
         if (session?.user && event === 'SIGNED_IN') {
-          // Defer profile fetching to prevent deadlocks
-          setTimeout(async () => {
+          // Use Promise.resolve() to defer without setTimeout
+          Promise.resolve().then(async () => {
             let profileData = await fetchProfile(session.user.id);
             if (!profileData && session.user.user_metadata) {
               // Create profile from user metadata if it doesn't exist
@@ -233,7 +233,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             }
             setProfile(profileData);
             setLoading(false);
-          }, 0);
+          });
         } else {
           setProfile(null);
           setLoading(false);
