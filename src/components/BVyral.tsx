@@ -71,7 +71,7 @@ export const BVyral = () => {
       .from('creative_posts')
       .select(`
         *,
-        profiles:user_id (username, display_name, avatar_url)
+        profiles!creative_posts_user_id_fkey (username, display_name, avatar_url)
       `)
       .eq('moderation_status', 'approved')
       .order('created_at', { ascending: false })
@@ -84,9 +84,9 @@ export const BVyral = () => {
         description: error.message,
         variant: "destructive"
       });
-    } else {
+    } else if (data) {
       // Check which posts the current user has liked
-      if (user && data) {
+      if (user) {
         const { data: likes } = await supabase
           .from('creative_post_likes')
           .select('post_id')
@@ -97,15 +97,20 @@ export const BVyral = () => {
         
         const postsWithLikes = data.map(post => ({
           ...post,
-          user_liked: likedPostIds.has(post.id)
+          user_liked: likedPostIds.has(post.id),
+          profiles: post.profiles || { username: null, display_name: null, avatar_url: null }
         }));
         
-        setPosts(postsWithLikes);
-      setPosts(data?.map(post => ({
-        ...post,
-        user_liked: false,
-        profiles: post.profiles || { username: null, display_name: null, avatar_url: null }
-      })) || []);
+        setPosts(postsWithLikes as CreativePost[]);
+      } else {
+        const postsWithDefaults = data.map(post => ({
+          ...post,
+          user_liked: false,
+          profiles: post.profiles || { username: null, display_name: null, avatar_url: null }
+        }));
+        
+        setPosts(postsWithDefaults as CreativePost[]);
+      }
     }
     setLoading(false);
   };
@@ -227,7 +232,7 @@ export const BVyral = () => {
       .from('creative_post_comments')
       .select(`
         *,
-        profiles:user_id (username, display_name)
+        profiles!creative_post_comments_user_id_fkey (username, display_name)
       `)
       .eq('post_id', post.id)
       .eq('moderation_status', 'approved')
@@ -235,8 +240,12 @@ export const BVyral = () => {
 
     if (error) {
       console.error('Error fetching comments:', error);
-    } else {
-      setComments(data || []);
+    } else if (data) {
+      const commentsWithProfiles = data.map(comment => ({
+        ...comment,
+        profiles: comment.profiles || { username: 'Anonymous', display_name: 'Anonymous' }
+      }));
+      setComments(commentsWithProfiles as Comment[]);
     }
   };
 
